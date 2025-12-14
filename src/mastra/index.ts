@@ -208,7 +208,21 @@ export const mastra = new Mastra({
         },
       },
 
-      // NEW URL FORMAT: Event page by city slug and template ID - MUST BE NEAR TOP
+      // NEW URL FORMAT: Event page by city slug, template ID, and link ID (all as path params to avoid proxy encoding issues)
+      {
+        path: "/show/:city/:id/:lid",
+        method: "GET",
+        handler: async (c) => {
+          const fs = await import("fs");
+          const html = fs.readFileSync("/home/runner/workspace/src/mastra/public/event.html", "utf-8");
+          c.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+          c.header("Pragma", "no-cache");
+          c.header("Expires", "0");
+          return c.html(html);
+        },
+      },
+
+      // Fallback route without lid for template browsing
       {
         path: "/show/:city/:id",
         method: "GET",

@@ -1284,7 +1284,9 @@
           // Use link_id from response - this is the critical reference to the database
           const linkId = result.link_id;
           
-          const link = `${window.location.origin}/show/${citySlug}/${eventId}?lid=${linkId}`;
+          // Use path format instead of query params to avoid Replit proxy encoding issues
+          // Format: /show/citySlug/templateId/linkId
+          const link = `${window.location.origin}/show/${citySlug}/${eventId}/${linkId}`;
           document.getElementById('generatedLink').value = link;
           document.getElementById('resultSection').classList.add('show');
         } else {

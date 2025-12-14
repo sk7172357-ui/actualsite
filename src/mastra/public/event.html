@@ -803,7 +803,13 @@
     
     function getNewUrlParams() {
       const path = window.location.pathname;
-      // Match /show/city/id format
+      // Match /show/city/id/lid format (lid is optional)
+      // Format: /show/kazan/22/39 where 39 is the link ID
+      const matchWithLid = path.match(/^\/show\/([a-z-]+)\/(\d+)\/(\d+)/i);
+      if (matchWithLid) {
+        return { citySlug: matchWithLid[1], templateId: matchWithLid[2], lid: matchWithLid[3] };
+      }
+      // Fallback: /show/city/id without lid
       const match = path.match(/^\/show\/([a-z-]+)\/(\d+)/i);
       if (match) {
         return { citySlug: match[1], templateId: match[2] };
@@ -856,10 +862,9 @@
       
       try {
         if (isNewUrlFormat) {
-          // NEW URL FORMAT: Load from /show/:city/:id?lid=linkId
-          // For new format with lid - DO NOT validate old localStorage, just use the lid directly
-          const urlParams = new URLSearchParams(window.location.search);
-          linkId = urlParams.get('lid'); // Store in outer scope for goToBooking
+          // NEW URL FORMAT: Load from /show/:city/:id/:lid (lid is part of path, not query param)
+          // This avoids Replit proxy encoding issues with query params
+          linkId = newUrlParams.lid || null; // Get lid from path, store in outer scope for goToBooking
           
           console.log('[EventPage] New URL format, lid:', linkId);
           
