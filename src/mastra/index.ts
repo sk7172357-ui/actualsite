@@ -534,12 +534,14 @@ export const mastra = new Mastra({
             const orderCode = `LNK-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
             
             // Create order (use event_template_id instead of event_id for generated links)
+            // IMPORTANT: Store event_date, event_time, city_id directly so tickets work even if generated_link is deleted
             const ticketsJson = body.tickets ? JSON.stringify(body.tickets) : null;
             const orderResult = await pool.query(
               `INSERT INTO orders (
                 event_id, event_template_id, link_code, customer_name, customer_phone, customer_email, 
-                seats_count, total_price, order_code, status, payment_status, tickets_json
-              ) VALUES (NULL, $1, $2, $3, $4, $5, $6, $7, $8, 'pending', 'pending', $9)
+                seats_count, total_price, order_code, status, payment_status, tickets_json,
+                event_date, event_time, city_id
+              ) VALUES (NULL, $1, $2, $3, $4, $5, $6, $7, $8, 'pending', 'pending', $9, $10, $11, $12)
               RETURNING id`,
               [
                 link.template_id,
@@ -550,7 +552,10 @@ export const mastra = new Mastra({
                 seatsCount,
                 totalPrice,
                 orderCode,
-                ticketsJson
+                ticketsJson,
+                link.event_date || null,
+                link.event_time || null,
+                link.city_id || null
               ]
             );
             
@@ -1318,6 +1323,11 @@ export const mastra = new Mastra({
         path: "/api/ticket/:orderCode",
         method: "GET",
         handler: async (c) => {
+          // Prevent caching to ensure fresh ticket data
+          c.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+          c.header("Pragma", "no-cache");
+          c.header("Expires", "0");
+          
           const orderCode = c.req.param("orderCode");
           try {
             const pg = await import("pg");
