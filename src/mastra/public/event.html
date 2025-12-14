@@ -803,16 +803,29 @@
     
     function getNewUrlParams() {
       const path = window.location.pathname;
-      // Match /show/city/id/lid format (lid is optional)
+      // Match /show/city/id/lid format (lid as path param - new format)
       // Format: /show/kazan/22/39 where 39 is the link ID
       const matchWithLid = path.match(/^\/show\/([a-z-]+)\/(\d+)\/(\d+)/i);
       if (matchWithLid) {
         return { citySlug: matchWithLid[1], templateId: matchWithLid[2], lid: matchWithLid[3] };
       }
-      // Fallback: /show/city/id without lid
+      // Fallback: /show/city/id without lid in path - check query params for backwards compatibility
       const match = path.match(/^\/show\/([a-z-]+)\/(\d+)/i);
       if (match) {
-        return { citySlug: match[1], templateId: match[2] };
+        // Check for ?lid= query param (old format, may be encoded as %3Flid=)
+        const urlParams = new URLSearchParams(window.location.search);
+        let lid = urlParams.get('lid');
+        
+        // Also check if lid is encoded in the path (e.g., /show/kazan/22%3Flid=39)
+        if (!lid) {
+          const decodedPath = decodeURIComponent(path);
+          const encodedMatch = decodedPath.match(/\?lid=(\d+)/);
+          if (encodedMatch) {
+            lid = encodedMatch[1];
+          }
+        }
+        
+        return { citySlug: match[1], templateId: match[2], lid: lid || undefined };
       }
       return null;
     }
@@ -1154,9 +1167,26 @@
     
     function renderCategoryNav() {
       const nav = document.getElementById('categoryNav');
-      nav.innerHTML = categoryTabs.map((tab, i) => `
-        <a href="#" class="category-tab ${eventData.categoryName?.toUpperCase() === tab ? 'active' : ''}">${tab}</a>
-      `).join('');
+      const categoryIds = {
+        'ВЫСТАВКИ': 1,
+        'МУЗЕИ': 2,
+        'КВЕСТ КОМНАТА': 3,
+        'ЭКСТРИМ': 4,
+        'DAILY': 5,
+        'КОМНАТА ГНЕВА': 6,
+        'БИЛЬЯРД': 7,
+        'БОУЛИНГ': 8
+      };
+      nav.innerHTML = categoryTabs.map((tab, i) => {
+        const catId = categoryIds[tab] || (i + 1);
+        return `<a href="/#cat-${catId}" class="category-tab ${eventData.categoryName?.toUpperCase() === tab ? 'active' : ''}" onclick="goToCategory(${catId}, event)">${tab}</a>`;
+      }).join('');
+    }
+    
+    function goToCategory(categoryId, event) {
+      event.preventDefault();
+      // Navigate to main page with category filter
+      window.location.href = '/#cat-' + categoryId;
     }
     
     function renderMainContent() {
