@@ -2758,65 +2758,76 @@ export const mastra = new Mastra({
             const templateId = c.req.param("templateId");
             const linkIdParam = c.req.query("lid"); // Link ID from generated_links table
             
+            console.log("[event-by-city] Request:", { citySlug, templateId, linkIdParam });
+            
             const pg = await import("pg");
             const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
             
-            // First, find the city by transliterating all cities and matching
-            const citiesResult = await pool.query("SELECT id, name FROM cities");
-            let cityId = null;
-            let cityName = null;
-            
-            for (const city of citiesResult.rows) {
-              if (transliterateCityName(city.name) === citySlug) {
-                cityId = city.id;
-                cityName = city.name;
-                break;
-              }
-            }
-            
-            if (!cityId) {
-              await pool.end();
-              return c.json({ error: "City not found" }, 404);
-            }
-            
             // CRITICAL: Check if link exists and is active in generated_links table
+            // Use ONLY the linkId to get all data - this is the source of truth!
             if (!linkIdParam) {
               await pool.end();
+              console.log("[event-by-city] No lid parameter provided");
               return c.json({ error: "Link not found" }, 404);
             }
             
+            // Get link with city info directly from the link's city_id
             const linkResult = await pool.query(`
               SELECT gl.*, et.name as event_name, et.description, et.is_active as template_active,
-                     cat.name_ru as category_name
+                     cat.name_ru as category_name, cities.name as city_name
               FROM generated_links gl
               JOIN event_templates et ON gl.event_template_id = et.id
               JOIN categories cat ON et.category_id = cat.id
-              WHERE gl.id = $1 AND gl.event_template_id = $2 AND gl.city_id = $3
-            `, [linkIdParam, templateId, cityId]);
+              JOIN cities ON gl.city_id = cities.id
+              WHERE gl.id = $1
+            `, [linkIdParam]);
             
             if (linkResult.rows.length === 0) {
               await pool.end();
+              console.log("[event-by-city] Link not found for lid:", linkIdParam);
               return c.json({ error: "Link not found" }, 404);
             }
             
             const link = linkResult.rows[0];
+            console.log("[event-by-city] Found link:", { 
+              linkId: link.id, 
+              templateId: link.event_template_id, 
+              cityId: link.city_id, 
+              cityName: link.city_name,
+              eventName: link.event_name
+            });
+            
+            // Validate that URL matches the link's data (security check)
+            const expectedCitySlug = transliterateCityName(link.city_name);
+            if (citySlug !== expectedCitySlug || parseInt(templateId) !== link.event_template_id) {
+              await pool.end();
+              console.log("[event-by-city] URL mismatch:", { 
+                urlCitySlug: citySlug, 
+                expectedCitySlug, 
+                urlTemplateId: templateId, 
+                linkTemplateId: link.event_template_id 
+              });
+              return c.json({ error: "Link not found" }, 404);
+            }
             
             // Check if link is active
             if (!link.is_active) {
               await pool.end();
+              console.log("[event-by-city] Link is disabled:", linkIdParam);
               return c.json({ error: "Link is disabled" }, 404);
             }
             
             // Check if template is active
             if (!link.template_active) {
               await pool.end();
+              console.log("[event-by-city] Template is inactive:", link.event_template_id);
               return c.json({ error: "Event not found" }, 404);
             }
             
             // Get images for this event template
             const imagesResult = await pool.query(
               "SELECT image_url FROM event_template_images WHERE event_template_id = $1 ORDER BY sort_order LIMIT 5",
-              [templateId]
+              [link.event_template_id]
             );
             const images = imagesResult.rows.map(r => r.image_url);
             
@@ -2827,7 +2838,7 @@ export const mastra = new Mastra({
             const eventTime = link.event_time || "12:00";
             const availableSeats = link.available_seats || 2;
             
-            return c.json({
+            const responseData = {
               id: link.event_template_id,
               linkId: link.id,
               linkCode: link.link_code,
@@ -2837,15 +2848,23 @@ export const mastra = new Mastra({
               imageUrl: images[0] || null,
               categoryId: link.category_id,
               categoryName: link.category_name,
-              cityId: cityId,
-              cityName: cityName,
-              citySlug: citySlug,
+              cityId: link.city_id,        // Use city_id from link, not URL
+              cityName: link.city_name,    // Use city_name from link, not URL
+              citySlug: transliterateCityName(link.city_name),
               eventDate: eventDate.toISOString().split('T')[0],
               eventTime: eventTime,
               venueAddress: link.venue_address || '',
               availableSeats: availableSeats,
               price: 2490
+            };
+            
+            console.log("[event-by-city] Returning data:", { 
+              eventName: responseData.name, 
+              cityName: responseData.cityName, 
+              cityId: responseData.cityId 
             });
+            
+            return c.json(responseData);
           } catch (error) {
             console.error("Error fetching event by city:", error);
             return c.json({ error: "Server error" }, 500);
