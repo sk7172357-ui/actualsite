@@ -841,12 +841,6 @@
     }
     
     async function loadData() {
-      // Validate link access first
-      if (!await validateLinkAccess()) {
-        showUnavailablePage();
-        return;
-      }
-      
       linkCode = getLinkCode();
       isGeneratedLink = !!linkCode;
       const newUrlParams = getNewUrlParams();
@@ -862,16 +856,22 @@
       
       try {
         if (isNewUrlFormat) {
-          // NEW URL FORMAT: Load from /:city/event/show/:id?lid=linkId
+          // NEW URL FORMAT: Load from /show/:city/:id?lid=linkId
+          // For new format with lid - DO NOT validate old localStorage, just use the lid directly
           const urlParams = new URLSearchParams(window.location.search);
           linkId = urlParams.get('lid'); // Store in outer scope for goToBooking
+          
+          console.log('[EventPage] New URL format, lid:', linkId);
           
           if (linkId) {
             // With lid - check the generated link in database (validates is_active, etc.)
             let apiUrl = `/api/event-by-city/${newUrlParams.citySlug}/${newUrlParams.templateId}?lid=${linkId}`;
+            console.log('[EventPage] Fetching:', apiUrl);
             const res = await fetch(apiUrl);
+            console.log('[EventPage] API response status:', res.status);
             if (res.ok) {
               const data = await res.json();
+              console.log('[EventPage] API data:', data);
               if (data && !data.error) {
                 isGeneratedLink = true;
                 templateId = parseInt(newUrlParams.templateId); // Store for recommendations filtering
@@ -894,6 +894,7 @@
                 };
                 currentCitySlug = data.citySlug || transliterate(data.cityName);
                 
+                // Update localStorage with new valid access
                 if (data.cityName && data.cityId) {
                   localStorage.setItem('afisha_city_access', JSON.stringify({
                     cityId: data.cityId,
@@ -903,10 +904,12 @@
                   }));
                 }
               } else {
+                console.log('[EventPage] API returned error:', data);
                 showUnavailablePage();
                 return;
               }
             } else {
+              console.log('[EventPage] API request failed');
               showUnavailablePage();
               return;
             }
