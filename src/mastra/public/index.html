@@ -367,8 +367,8 @@
       const hasFavorite = Math.random() > 0.7;
       const has18Plus = Math.random() > 0.6;
       
-      // Use new URL format: /:citySlug/event/show/:id?r=timestamp
-      const eventUrl = `/${citySlug}/event/show/${event.id}?r=${Date.now()}`;
+      // Use new URL format: /show/:citySlug/:id?r=timestamp
+      const eventUrl = `/show/${citySlug}/${event.id}?r=${Date.now()}`;
       
       return `
         <a href="${eventUrl}" class="event-card">

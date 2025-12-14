@@ -803,8 +803,8 @@
     
     function getNewUrlParams() {
       const path = window.location.pathname;
-      // Match city/event/show/id, allow optional encoded query string at end
-      const match = path.match(/^\/([a-z-]+)\/event\/show\/(\d+)/i);
+      // Match /show/city/id format
+      const match = path.match(/^\/show\/([a-z-]+)\/(\d+)/i);
       if (match) {
         return { citySlug: match[1], templateId: match[2] };
       }
@@ -1372,7 +1372,7 @@
     function openEvent(id) {
       // Use new URL format with city slug
       const slug = currentCitySlug || transliterate(eventData?.cityName || 'moskva');
-      window.location.href = `/${slug}/event/show/${id}?r=${Date.now()}`;
+      window.location.href = `/show/${slug}/${id}?r=${Date.now()}`;
     }
     
     function generateFullSchedule(price, city, venue) {

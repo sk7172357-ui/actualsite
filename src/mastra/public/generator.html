@@ -1284,7 +1284,7 @@
           // Use link_id from response - this is the critical reference to the database
           const linkId = result.link_id;
           
-          const link = `${window.location.origin}/${citySlug}/event/show/${eventId}?lid=${linkId}`;
+          const link = `${window.location.origin}/show/${citySlug}/${eventId}?lid=${linkId}`;
           document.getElementById('generatedLink').value = link;
           document.getElementById('resultSection').classList.add('show');
         } else {

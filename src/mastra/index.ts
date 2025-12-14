@@ -1421,7 +1421,7 @@ export const mastra = new Mastra({
 
       // NEW URL FORMAT: Event page by city slug and template ID
       {
-        path: "/:city/event/show/:id",
+        path: "/show/:city/:id",
         method: "GET",
         handler: async (c) => {
           const fs = await import("fs");
