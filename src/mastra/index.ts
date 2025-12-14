@@ -208,7 +208,21 @@ export const mastra = new Mastra({
         },
       },
 
-      // NEW URL FORMAT: Event page by city slug, template ID, and link ID (all as path params to avoid proxy encoding issues)
+      // SIMPLE URL FORMAT: Event page by template ID and link ID only (no city slug to avoid transliteration issues)
+      {
+        path: "/show/:id/:lid",
+        method: "GET",
+        handler: async (c) => {
+          const fs = await import("fs");
+          const html = fs.readFileSync("/home/runner/workspace/src/mastra/public/event.html", "utf-8");
+          c.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+          c.header("Pragma", "no-cache");
+          c.header("Expires", "0");
+          return c.html(html);
+        },
+      },
+
+      // Legacy format with city slug (for backwards compatibility)
       {
         path: "/show/:city/:id/:lid",
         method: "GET",
