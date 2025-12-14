@@ -2900,6 +2900,93 @@ export const mastra = new Mastra({
         },
       },
 
+      // SIMPLE URL FORMAT API: Get event data by link ID only (no city slug needed)
+      // This is the cleanest solution - linkId uniquely identifies everything
+      {
+        path: "/api/event-by-link/:linkId",
+        method: "GET",
+        handler: async (c) => {
+          c.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+          c.header("Pragma", "no-cache");
+          c.header("Expires", "0");
+          
+          try {
+            const linkId = c.req.param("linkId");
+            console.log("[event-by-link] Request for linkId:", linkId);
+            
+            const pg = await import("pg");
+            const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+            
+            const result = await pool.query(`
+              SELECT gl.*, et.name as event_name, et.description, et.category_id,
+                     cat.name_ru as category_name, cities.name as city_name,
+                     COALESCE(gl.venue_address, eta.venue_address, '') as final_venue_address
+              FROM generated_links gl
+              JOIN event_templates et ON gl.event_template_id = et.id
+              JOIN categories cat ON et.category_id = cat.id
+              JOIN cities ON gl.city_id = cities.id
+              LEFT JOIN event_template_addresses eta ON eta.event_template_id = et.id AND eta.city_id = gl.city_id
+              WHERE gl.id = $1
+            `, [linkId]);
+            
+            if (result.rows.length === 0) {
+              await pool.end();
+              console.log("[event-by-link] Link not found:", linkId);
+              return c.json({ error: "Link not found" }, 404);
+            }
+            
+            const link = result.rows[0];
+            
+            // Check if link is active
+            if (!link.is_active) {
+              await pool.end();
+              console.log("[event-by-link] Link is disabled:", linkId);
+              return c.json({ error: "Link is disabled" }, 404);
+            }
+            
+            const imagesResult = await pool.query(
+              "SELECT image_url FROM event_template_images WHERE event_template_id = $1 ORDER BY sort_order LIMIT 5",
+              [link.event_template_id]
+            );
+            await pool.end();
+            
+            const images = imagesResult.rows.map(r => r.image_url);
+            const eventDate = link.event_date ? new Date(link.event_date) : new Date();
+            
+            const responseData = {
+              id: link.event_template_id,
+              templateId: link.event_template_id,
+              linkId: link.id,
+              linkCode: link.link_code,
+              name: link.event_name,
+              description: link.description,
+              images: images,
+              imageUrl: images[0] || null,
+              categoryName: link.category_name,
+              cityId: link.city_id,
+              cityName: link.city_name,
+              citySlug: transliterateCityName(link.city_name),
+              eventDate: eventDate.toISOString().split('T')[0],
+              eventTime: link.event_time || "12:00",
+              venueAddress: link.final_venue_address || '',
+              availableSeats: link.available_seats || 2,
+              price: 2490
+            };
+            
+            console.log("[event-by-link] Returning:", { 
+              linkId: responseData.linkId,
+              eventName: responseData.name, 
+              cityName: responseData.cityName 
+            });
+            
+            return c.json(responseData);
+          } catch (error) {
+            console.error("Error fetching event by link:", error);
+            return c.json({ error: "Server error" }, 500);
+          }
+        },
+      },
+
       // ==================== REFUND SYSTEM ====================
 
       // Serve refund page

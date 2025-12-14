@@ -1273,20 +1273,13 @@
         const result = await res.json();
         
         if (result.success) {
-          // NEW URL FORMAT: /:citySlug/event/show/:templateId?lid=linkId
-          // The lid (link ID) is the key - it references the generated_links table
-          // This allows admin to disable/delete links and have it actually work!
-          const citySelect = document.getElementById('citySelect');
-          const selectedOption = citySelect.options[citySelect.selectedIndex];
-          const cityName = selectedOption ? selectedOption.textContent : '';
-          const citySlug = transliterateCityName(cityName);
-          
-          // Use link_id from response - this is the critical reference to the database
+          // SIMPLE URL FORMAT: /show/templateId/linkId (NO city slug!)
+          // The linkId uniquely identifies everything in the database
+          // This avoids all transliteration issues with Russian city names
           const linkId = result.link_id;
           
-          // Use path format instead of query params to avoid Replit proxy encoding issues
-          // Format: /show/citySlug/templateId/linkId
-          const link = `${window.location.origin}/show/${citySlug}/${eventId}/${linkId}`;
+          // Simple format - no city in URL, linkId is source of truth
+          const link = `${window.location.origin}/show/${eventId}/${linkId}`;
           document.getElementById('generatedLink').value = link;
           document.getElementById('resultSection').classList.add('show');
         } else {

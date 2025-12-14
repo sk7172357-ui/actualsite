@@ -803,20 +803,26 @@
     
     function getNewUrlParams() {
       const path = window.location.pathname;
-      // Match /show/city/id/lid format (lid as path param - new format)
-      // Format: /show/kazan/22/39 where 39 is the link ID
+      
+      // SIMPLE FORMAT (preferred): /show/templateId/linkId (no city slug!)
+      // This is the cleanest format - linkId uniquely identifies everything
+      const simpleMatch = path.match(/^\/show\/(\d+)\/(\d+)$/i);
+      if (simpleMatch) {
+        return { templateId: simpleMatch[1], lid: simpleMatch[2], simple: true };
+      }
+      
+      // Legacy format: /show/city/id/lid (with city slug)
       const matchWithLid = path.match(/^\/show\/([a-z-]+)\/(\d+)\/(\d+)/i);
       if (matchWithLid) {
         return { citySlug: matchWithLid[1], templateId: matchWithLid[2], lid: matchWithLid[3] };
       }
-      // Fallback: /show/city/id without lid in path - check query params for backwards compatibility
+      
+      // Fallback: /show/city/id without lid in path
       const match = path.match(/^\/show\/([a-z-]+)\/(\d+)/i);
       if (match) {
-        // Check for ?lid= query param (old format, may be encoded as %3Flid=)
         const urlParams = new URLSearchParams(window.location.search);
         let lid = urlParams.get('lid');
         
-        // Also check if lid is encoded in the path (e.g., /show/kazan/22%3Flid=39)
         if (!lid) {
           const decodedPath = decodeURIComponent(path);
           const encodedMatch = decodedPath.match(/\?lid=(\d+)/);
@@ -875,15 +881,14 @@
       
       try {
         if (isNewUrlFormat) {
-          // NEW URL FORMAT: Load from /show/:city/:id/:lid (lid is part of path, not query param)
-          // This avoids Replit proxy encoding issues with query params
-          linkId = newUrlParams.lid || null; // Get lid from path, store in outer scope for goToBooking
+          linkId = newUrlParams.lid || null;
           
-          console.log('[EventPage] New URL format, lid:', linkId);
+          console.log('[EventPage] New URL format:', { simple: newUrlParams.simple, lid: linkId });
           
           if (linkId) {
-            // With lid - check the generated link in database (validates is_active, etc.)
-            let apiUrl = `/api/event-by-city/${newUrlParams.citySlug}/${newUrlParams.templateId}?lid=${linkId}`;
+            // ALWAYS use /api/event-by-link for linkId-based lookups
+            // This ensures we get authoritative data from the link, ignoring any URL manipulation
+            const apiUrl = `/api/event-by-link/${linkId}`;
             console.log('[EventPage] Fetching:', apiUrl);
             const res = await fetch(apiUrl);
             console.log('[EventPage] API response status:', res.status);
@@ -891,8 +896,16 @@
               const data = await res.json();
               console.log('[EventPage] API data:', data);
               if (data && !data.error) {
+                // Validate templateId matches if URL specified one
+                const urlTemplateId = parseInt(newUrlParams.templateId);
+                if (data.templateId && urlTemplateId !== data.templateId) {
+                  console.error('[EventPage] Template mismatch! URL:', urlTemplateId, 'API:', data.templateId);
+                  showUnavailablePage();
+                  return;
+                }
+                
                 isGeneratedLink = true;
-                templateId = parseInt(newUrlParams.templateId); // Store for recommendations filtering
+                templateId = data.templateId || urlTemplateId; // Trust API templateId first
                 linkCode = data.linkCode; // Store link code for booking navigation
                 eventData = {
                   id: data.id,
