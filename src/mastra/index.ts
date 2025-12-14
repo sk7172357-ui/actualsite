@@ -1694,17 +1694,6 @@ export const mastra = new Mastra({
         },
       },
 
-      // Public event page by slug
-      {
-        path: "/e/:slug",
-        method: "GET",
-        handler: async (c) => {
-          const fs = await import("fs");
-          const html = fs.readFileSync("/home/runner/workspace/src/mastra/public/ticket.html", "utf-8");
-          return c.html(html);
-        },
-      },
-
       // API: Get event by slug
       {
         path: "/api/e/:slug",
