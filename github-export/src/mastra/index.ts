@@ -30,6 +30,45 @@ import {
   getBot
 } from "./services/telegramAdminService";
 
+// Helper function to read static HTML files from multiple possible paths
+async function readStaticFile(filename: string): Promise<string | null> {
+  const { readFile } = await import("fs/promises");
+  const { join, dirname } = await import("path");
+  const { fileURLToPath } = await import("url");
+  
+  let currentDir = process.cwd();
+  try {
+    const __filename = fileURLToPath(import.meta.url);
+    currentDir = dirname(__filename);
+  } catch {}
+  
+  const possiblePaths = [
+    // Relative to current module (for mastra build)
+    join(currentDir, `public/${filename}`),
+    join(currentDir, `../public/${filename}`),
+    // Relative to cwd
+    `./src/mastra/public/${filename}`,
+    join(process.cwd(), `src/mastra/public/${filename}`),
+    join(process.cwd(), `public/${filename}`),
+    // Mastra build output paths
+    join(process.cwd(), `.mastra/output/public/${filename}`),
+    join(process.cwd(), `dist/public/${filename}`),
+  ];
+  
+  for (const htmlPath of possiblePaths) {
+    try {
+      const html = await readFile(htmlPath, "utf-8");
+      console.log(`[Static] Found ${filename} at: ${htmlPath}`);
+      return html;
+    } catch {
+      continue;
+    }
+  }
+  
+  console.error(`[Static] ${filename} not found in any path`);
+  return null;
+}
+
 // Helper function to generate refund codes with RFD- prefix
 function generateRefundCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -213,12 +252,12 @@ export const mastra = new Mastra({
         path: "/show/:id/:lid",
         method: "GET",
         handler: async (c) => {
-          const fs = await import("fs");
-          const html = fs.readFileSync("./src/mastra/public/event.html", "utf-8");
-          c.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
-          c.header("Pragma", "no-cache");
-          c.header("Expires", "0");
-          return c.html(html);
+          const html = await readStaticFile("event.html");
+          if (html) {
+            c.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+            return c.html(html);
+          }
+          return c.text("Event page not found", 404);
         },
       },
 
@@ -227,12 +266,12 @@ export const mastra = new Mastra({
         path: "/show/:city/:id/:lid",
         method: "GET",
         handler: async (c) => {
-          const fs = await import("fs");
-          const html = fs.readFileSync("./src/mastra/public/event.html", "utf-8");
-          c.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
-          c.header("Pragma", "no-cache");
-          c.header("Expires", "0");
-          return c.html(html);
+          const html = await readStaticFile("event.html");
+          if (html) {
+            c.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+            return c.html(html);
+          }
+          return c.text("Event page not found", 404);
         },
       },
 
@@ -241,12 +280,12 @@ export const mastra = new Mastra({
         path: "/show/:city/:id",
         method: "GET",
         handler: async (c) => {
-          const fs = await import("fs");
-          const html = fs.readFileSync("./src/mastra/public/event.html", "utf-8");
-          c.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
-          c.header("Pragma", "no-cache");
-          c.header("Expires", "0");
-          return c.html(html);
+          const html = await readStaticFile("event.html");
+          if (html) {
+            c.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+            return c.html(html);
+          }
+          return c.text("Event page not found", 404);
         },
       },
 
@@ -313,23 +352,12 @@ export const mastra = new Mastra({
         path: "/admin-login",
         method: "GET",
         handler: async (c) => {
-          try {
-            const { readFile } = await import("fs/promises");
-            const { join } = await import("path");
-            const possiblePaths = [
-              "./src/mastra/public/admin-login.html",
-              join(process.cwd(), "src/mastra/public/admin-login.html"),
-            ];
-            for (const htmlPath of possiblePaths) {
-              try {
-                const html = await readFile(htmlPath, "utf-8");
-                return c.html(html);
-              } catch { continue; }
-            }
-            return c.text("Admin login page not found", 404);
-          } catch (error) {
-            return c.text("Error loading page", 500);
+          const html = await readStaticFile("admin-login.html");
+          if (html) {
+            c.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+            return c.html(html);
           }
+          return c.text("Admin login page not found", 404);
         },
       },
 
@@ -338,37 +366,14 @@ export const mastra = new Mastra({
         path: "/",
         method: "GET",
         handler: async (c) => {
-          try {
-            const { readFile } = await import("fs/promises");
-            const { join, dirname } = await import("path");
-            const { fileURLToPath } = await import("url");
-            
-            // Try multiple paths for production compatibility
-            const possiblePaths = [
-              "./src/mastra/public/index.html",
-              join(process.cwd(), "src/mastra/public/index.html"),
-              join(process.cwd(), "public/index.html"),
-            ];
-            
-            for (const htmlPath of possiblePaths) {
-              try {
-                const html = await readFile(htmlPath, "utf-8");
-                return c.html(html);
-              } catch {
-                continue;
-              }
-            }
-            
-            // Fallback response if no file found
-            return c.html(`<!DOCTYPE html>
-<html><head><title>Ticket System</title></head>
-<body><h1>Welcome to Ticket System</h1><p>Server is running.</p></body></html>`);
-          } catch (error) {
-            console.error("Error serving HTML:", error);
-            return c.html(`<!DOCTYPE html>
-<html><head><title>Ticket System</title></head>
-<body><h1>Welcome</h1></body></html>`);
+          const html = await readStaticFile("index.html");
+          if (html) {
+            c.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+            return c.html(html);
           }
+          return c.html(`<!DOCTYPE html>
+<html><head><title>Ticket System</title></head>
+<body><h1>Welcome to Ticket System</h1><p>Static files not found. Check build configuration.</p></body></html>`);
         },
       },
 
@@ -1426,9 +1431,12 @@ export const mastra = new Mastra({
         path: "/ticket",
         method: "GET",
         handler: async (c) => {
-          const fs = await import("fs");
-          const html = fs.readFileSync("./src/mastra/public/ticket.html", "utf-8");
-          return c.html(html);
+          const html = await readStaticFile("ticket.html");
+          if (html) {
+            c.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+            return c.html(html);
+          }
+          return c.text("Ticket page not found", 404);
         },
       },
 
@@ -1437,9 +1445,12 @@ export const mastra = new Mastra({
         path: "/payment",
         method: "GET",
         handler: async (c) => {
-          const fs = await import("fs");
-          const html = fs.readFileSync("./src/mastra/public/payment.html", "utf-8");
-          return c.html(html);
+          const html = await readStaticFile("payment.html");
+          if (html) {
+            c.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+            return c.html(html);
+          }
+          return c.text("Payment page not found", 404);
         },
       },
 
@@ -1448,12 +1459,12 @@ export const mastra = new Mastra({
         path: "/event/:id",
         method: "GET",
         handler: async (c) => {
-          const fs = await import("fs");
-          const html = fs.readFileSync("./src/mastra/public/event.html", "utf-8");
-          c.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
-          c.header("Pragma", "no-cache");
-          c.header("Expires", "0");
-          return c.html(html);
+          const html = await readStaticFile("event.html");
+          if (html) {
+            c.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+            return c.html(html);
+          }
+          return c.text("Event page not found", 404);
         },
       },
 
@@ -1462,12 +1473,12 @@ export const mastra = new Mastra({
         path: "/e/:code",
         method: "GET",
         handler: async (c) => {
-          const fs = await import("fs");
-          const html = fs.readFileSync("./src/mastra/public/event.html", "utf-8");
-          c.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
-          c.header("Pragma", "no-cache");
-          c.header("Expires", "0");
-          return c.html(html);
+          const html = await readStaticFile("event.html");
+          if (html) {
+            c.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+            return c.html(html);
+          }
+          return c.text("Event page not found", 404);
         },
       },
 
@@ -1476,9 +1487,12 @@ export const mastra = new Mastra({
         path: "/generator",
         method: "GET",
         handler: async (c) => {
-          const fs = await import("fs");
-          const html = fs.readFileSync("./src/mastra/public/generator.html", "utf-8");
-          return c.html(html);
+          const html = await readStaticFile("generator.html");
+          if (html) {
+            c.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+            return c.html(html);
+          }
+          return c.text("Generator page not found", 404);
         },
       },
       
@@ -1487,9 +1501,12 @@ export const mastra = new Mastra({
         path: "/admin-events",
         method: "GET",
         handler: async (c) => {
-          const fs = await import("fs");
-          const html = fs.readFileSync("./src/mastra/public/admin-events.html", "utf-8");
-          return c.html(html);
+          const html = await readStaticFile("admin-events.html");
+          if (html) {
+            c.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+            return c.html(html);
+          }
+          return c.text("Admin events page not found", 404);
         },
       },
 
@@ -2072,20 +2089,12 @@ export const mastra = new Mastra({
         path: "/pay",
         method: "GET",
         handler: async (c) => {
-          const fs = await import("fs");
-          const html = fs.readFileSync("./src/mastra/public/pay.html", "utf-8");
-          return c.html(html);
-        },
-      },
-
-      // Generator page
-      {
-        path: "/generator",
-        method: "GET",
-        handler: async (c) => {
-          const fs = await import("fs");
-          const html = fs.readFileSync("./src/mastra/public/generator.html", "utf-8");
-          return c.html(html);
+          const html = await readStaticFile("pay.html");
+          if (html) {
+            c.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+            return c.html(html);
+          }
+          return c.text("Pay page not found", 404);
         },
       },
 
@@ -2696,9 +2705,12 @@ export const mastra = new Mastra({
         path: "/booking-link/:code",
         method: "GET",
         handler: async (c) => {
-          const fs = await import("fs");
-          const html = fs.readFileSync("./src/mastra/public/booking.html", "utf-8");
-          return c.html(html);
+          const html = await readStaticFile("booking.html");
+          if (html) {
+            c.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+            return c.html(html);
+          }
+          return c.text("Booking page not found", 404);
         },
       },
 
@@ -2707,9 +2719,12 @@ export const mastra = new Mastra({
         path: "/booking/:id",
         method: "GET",
         handler: async (c) => {
-          const fs = await import("fs");
-          const html = fs.readFileSync("./src/mastra/public/booking.html", "utf-8");
-          return c.html(html);
+          const html = await readStaticFile("booking.html");
+          if (html) {
+            c.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+            return c.html(html);
+          }
+          return c.text("Booking page not found", 404);
         },
       },
 
@@ -3004,13 +3019,12 @@ export const mastra = new Mastra({
         path: "/refund/:code",
         method: "GET",
         handler: async (c) => {
-          const fs = await import("fs");
-          try {
-            const html = fs.readFileSync("./src/mastra/public/refund.html", "utf-8");
+          const html = await readStaticFile("refund.html");
+          if (html) {
+            c.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
             return c.html(html);
-          } catch (error) {
-            return c.text("Page not found", 404);
           }
+          return c.text("Refund page not found", 404);
         },
       },
 
