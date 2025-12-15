@@ -181,9 +181,8 @@ export function inngestServe({
 }): ReturnType<typeof originalInngestServe> {
   let serveHost: string | undefined = undefined;
   if (process.env.NODE_ENV === "production") {
-    if (process.env.REPLIT_DOMAINS) {
-      serveHost = `https://${process.env.REPLIT_DOMAINS.split(",")[0]}`;
-    }
+    // Use APP_URL for production deployments
+    serveHost = process.env.APP_URL;
   } else {
     serveHost = "http://localhost:5000";
   }

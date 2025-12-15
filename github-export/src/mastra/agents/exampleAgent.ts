@@ -6,29 +6,15 @@ import { createOpenAI } from "@ai-sdk/openai";
 
 /**
  * LLM CLIENT CONFIGURATION
- *
- * IMPORTANT: Both approaches require the SAME syntax for Replit Playground compatibility:
- * - Use AI SDK v4: model, e.g. openai("gpt-4o-mini")
- * - In workflows: Use agent.generateLegacy()
- * - The Replit Playground UI always calls the legacy Mastra endpoint.
- * NOTE: You must always keep the API key as an environment variable for safety!
- * ---
- * OPTION 1: Replit AI Integrations, **only** if user has enabled it via connector.
- *
- * No OpenAI API key required - charges billed to Replit credits
- * Automatic key rotation and management
+ * 
+ * Uses standard OpenAI API configuration.
+ * Set OPENAI_API_KEY in your environment.
+ * Optionally set OPENAI_BASE_URL for custom endpoints.
  */
 const openai = createOpenAI({
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+  baseURL: process.env.OPENAI_BASE_URL || undefined,
+  apiKey: process.env.OPENAI_API_KEY,
 });
-/*
- * OPTION 2: Standard OpenAI Setup (Your Own API Key)
- */
-// const openai = createOpenAI({
-//   baseURL: process.env.OPENAI_BASE_URL || undefined,
-//   apiKey: process.env.OPENAI_API_KEY,
-// });
 
 /**
  * Example Mastra Agent

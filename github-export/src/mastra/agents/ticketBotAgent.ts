@@ -7,11 +7,10 @@ import { createOrderTool } from "../tools/createOrderTool";
 import { manageOrderTool } from "../tools/manageOrderTool";
 import { sendTelegramNotificationTool } from "../tools/sendTelegramNotificationTool";
 
-// the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
-// Using Replit AI Integrations - no API key required
+// OpenAI client configuration - uses standard API key
 const openai = createOpenAI({
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+  baseURL: process.env.OPENAI_BASE_URL || undefined,
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 export const ticketBotAgent = new Agent({

@@ -29,28 +29,11 @@ export async function setupTelegramWebhook(): Promise<boolean> {
     return false;
   }
   
-  // In production, use REPLIT_DEPLOYMENT_URL or REPLIT_DOMAINS
-  // In development, use REPLIT_DEV_DOMAIN
-  let baseUrl = process.env.REPLIT_DEPLOYMENT_URL;
+  // Use APP_URL environment variable for the webhook base URL
+  const baseUrl = process.env.APP_URL;
   
   if (!baseUrl) {
-    // Try to get from REPLIT_DOMAINS (comma-separated list, first one is primary)
-    const domains = process.env.REPLIT_DOMAINS;
-    if (domains) {
-      baseUrl = `https://${domains.split(',')[0]}`;
-    }
-  }
-  
-  if (!baseUrl) {
-    // Fallback to dev domain
-    const devDomain = process.env.REPLIT_DEV_DOMAIN || process.env.REPL_SLUG;
-    if (devDomain) {
-      baseUrl = `https://${devDomain}`;
-    }
-  }
-  
-  if (!baseUrl) {
-    console.warn("⚠️ [TelegramAdmin] No Replit domain found for webhook");
+    console.warn("⚠️ [TelegramAdmin] APP_URL not configured for webhook");
     return false;
   }
   
