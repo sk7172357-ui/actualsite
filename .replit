@@ -1,10 +1,11 @@
-modules = ["nodejs-20", "postgresql-16"]
+modules = ["nodejs-20", "postgresql-16", "python-3.11"]
 [nix]
 channel = "stable-25_05"
 packages = ["unzip"]
 
 [agent]
 expertMode = true
+integrations = ["github:1.0.0"]
 
 [deployment]
 build = ["npm", "run", "build"]
