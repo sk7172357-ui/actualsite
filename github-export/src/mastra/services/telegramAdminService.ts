@@ -1,7 +1,10 @@
 import TelegramBot from "node-telegram-bot-api";
 
-// New bot configuration (primary - used for all messages)
-const BOT_TOKEN = process.env.TELEGRAM_GROUP_BOT_TOKEN;
+// Telegram Bot Configuration - uses environment variables
+// TELEGRAM_BOT_TOKEN - токен бота от @BotFather
+// TELEGRAM_ADMIN_CHAT_ID - ID администратора для личных сообщений (можно узнать через @userinfobot)
+// TELEGRAM_GROUP_ID - (опционально) ID группы для групповых уведомлений
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_GROUP_BOT_TOKEN;
 const ADMIN_CHAT_ID = process.env.TELEGRAM_ADMIN_CHAT_ID;
 const GROUP_ID = process.env.TELEGRAM_GROUP_ID;
 
@@ -10,7 +13,7 @@ let webhookInitialized = false;
 
 export function getBot(): TelegramBot | null {
   if (!BOT_TOKEN) {
-    console.error("❌ [TelegramAdmin] TELEGRAM_GROUP_BOT_TOKEN not configured");
+    console.error("❌ [TelegramAdmin] TELEGRAM_BOT_TOKEN not configured");
     return null;
   }
   if (!bot) {
@@ -98,8 +101,10 @@ export async function sendChannelNotification(
     return false;
   }
 
-  if (!GROUP_ID) {
-    console.warn("⚠️ [TelegramAdmin] TELEGRAM_GROUP_ID not configured");
+  // If no GROUP_ID, send to admin directly instead
+  const targetChatId = GROUP_ID || ADMIN_CHAT_ID;
+  if (!targetChatId) {
+    console.warn("⚠️ [TelegramAdmin] No TELEGRAM_GROUP_ID or TELEGRAM_ADMIN_CHAT_ID configured");
     return false;
   }
 
@@ -113,7 +118,7 @@ export async function sendChannelNotification(
 ${order.cityName} | ${order.eventName} | ${order.eventDate} ${order.eventTime ? order.eventTime.substring(0, 5) : ''}`;
 
   try {
-    await telegramBot.sendMessage(GROUP_ID, message);
+    await telegramBot.sendMessage(targetChatId, message);
     console.log("✅ [TelegramAdmin] Channel notification sent");
     return true;
   } catch (error) {
@@ -131,8 +136,9 @@ export async function sendChannelPaymentPending(
     return false;
   }
 
-  if (!GROUP_ID) {
-    console.warn("⚠️ [TelegramAdmin] TELEGRAM_GROUP_ID not configured");
+  const targetChatId = GROUP_ID || ADMIN_CHAT_ID;
+  if (!targetChatId) {
+    console.warn("⚠️ [TelegramAdmin] No chat ID configured");
     return false;
   }
 
@@ -144,7 +150,7 @@ export async function sendChannelPaymentPending(
 ${order.cityName} | ${order.eventName} | ${order.eventDate} ${order.eventTime ? order.eventTime.substring(0, 5) : ''}`;
 
   try {
-    await telegramBot.sendMessage(GROUP_ID, message);
+    await telegramBot.sendMessage(targetChatId, message);
     console.log("✅ [TelegramAdmin] Channel payment pending notification sent");
     return true;
   } catch (error) {
@@ -162,8 +168,9 @@ export async function sendChannelPaymentConfirmed(
     return false;
   }
 
-  if (!GROUP_ID) {
-    console.warn("⚠️ [TelegramAdmin] TELEGRAM_GROUP_ID not configured");
+  const targetChatId = GROUP_ID || ADMIN_CHAT_ID;
+  if (!targetChatId) {
+    console.warn("⚠️ [TelegramAdmin] No chat ID configured");
     return false;
   }
 
@@ -175,7 +182,7 @@ export async function sendChannelPaymentConfirmed(
 ${order.cityName} | ${order.eventName} | ${order.eventDate} ${order.eventTime ? order.eventTime.substring(0, 5) : ''}`;
 
   try {
-    await telegramBot.sendMessage(GROUP_ID, message);
+    await telegramBot.sendMessage(targetChatId, message);
     console.log("✅ [TelegramAdmin] Channel payment confirmed notification sent");
     return true;
   } catch (error) {
@@ -193,8 +200,9 @@ export async function sendChannelPaymentRejected(
     return false;
   }
 
-  if (!GROUP_ID) {
-    console.warn("⚠️ [TelegramAdmin] TELEGRAM_GROUP_ID not configured");
+  const targetChatId = GROUP_ID || ADMIN_CHAT_ID;
+  if (!targetChatId) {
+    console.warn("⚠️ [TelegramAdmin] No chat ID configured");
     return false;
   }
 
@@ -207,7 +215,7 @@ export async function sendChannelPaymentRejected(
 ${order.cityName} | ${order.eventName} | ${order.eventDate} ${order.eventTime ? order.eventTime.substring(0, 5) : ''}`;
 
   try {
-    await telegramBot.sendMessage(GROUP_ID, message);
+    await telegramBot.sendMessage(targetChatId, message);
     console.log("✅ [TelegramAdmin] Channel payment rejected notification sent");
     return true;
   } catch (error) {
