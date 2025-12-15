@@ -863,6 +863,19 @@
     const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 
                         'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
     
+    // Транслитерация русских символов для URL
+    function transliterate(text) {
+      const map = {
+        'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo',
+        'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
+        'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+        'ф': 'f', 'х': 'kh', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'sch',
+        'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
+        ' ': '-', '-': '-'
+      };
+      return text.toLowerCase().split('').map(c => map[c] || c).join('').replace(/--+/g, '-');
+    }
+    
     function getMoscowNow() {
       const now = new Date();
       const mskMs = now.getTime() + (3 * 3600000);
@@ -1282,13 +1295,15 @@
         const result = await res.json();
         
         if (result.success) {
-          // SIMPLE URL FORMAT: /show/templateId/linkId (NO city slug!)
-          // The linkId uniquely identifies everything in the database
-          // This avoids all transliteration issues with Russian city names
           const linkId = result.link_id;
           
-          // Simple format - no city in URL, linkId is source of truth
-          const link = `${window.location.origin}/show/${eventId}/${linkId}`;
+          // Получаем название города и транслитерируем для URL
+          const citySelect = document.getElementById('citySelect');
+          const cityName = citySelect.options[citySelect.selectedIndex].text;
+          const citySlug = transliterate(cityName);
+          
+          // Формат с городом: /show/city/templateId/linkId
+          const link = `${window.location.origin}/show/${citySlug}/${eventId}/${linkId}`;
           document.getElementById('generatedLink').value = link;
           document.getElementById('resultSection').classList.add('show');
         } else {
