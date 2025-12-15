@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <title>Админ-панель - Афиша</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      color: #fff;
+    }
+    .login-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .login-box {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      padding: 40px;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+    .login-box h1 { margin-bottom: 30px; font-size: 24px; }
+    .login-box input {
+      width: 100%;
+      padding: 15px;
+      margin-bottom: 20px;
+      border: none;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      font-size: 16px;
+    }
+    .login-box input::placeholder { color: rgba(255,255,255,0.6); }
+    .login-box button {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .login-box button:hover { transform: scale(1.02); }
+    .admin-container { display: none; padding: 20px; max-width: 1200px; margin: 0 auto; }
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding: 20px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 15px;
+    }
+    .admin-header h1 { font-size: 24px; }
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+    }
+    .btn-danger { background: #e74c3c; color: #fff; }
+    .btn:hover { transform: scale(1.02); opacity: 0.9; }
+    .events-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .event-card {
+      background: rgba(255,255,255,0.1);
+      border-radius: 15px;
+      padding: 20px;
+      position: relative;
+    }
+    .event-card h3 { margin-bottom: 10px; font-size: 18px; }
+    .event-card .meta { color: rgba(255,255,255,0.7); font-size: 14px; margin-bottom: 15px; }
+    .event-card .price { font-size: 20px; font-weight: bold; color: #4ade80; margin-bottom: 15px; }
+    .event-card .link-box {
+      background: rgba(0,0,0,0.3);
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      word-break: break-all;
+      margin-bottom: 15px;
+    }
+    .event-card .actions { display: flex; gap: 10px; }
+    .event-card .actions button { flex: 1; padding: 10px; font-size: 12px; }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .modal-content {
+      background: #1a1a2e;
+      padding: 30px;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-content h2 { margin-bottom: 20px; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-size: 14px; color: rgba(255,255,255,0.8); }
+    .form-group input, .form-group textarea, .form-group select {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      font-size: 14px;
+    }
+    .form-group textarea { min-height: 100px; resize: vertical; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .copy-btn {
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 11px;
+      margin-top: 5px;
+    }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #4ade80;
+      color: #000;
+      padding: 15px 25px;
+      border-radius: 10px;
+      display: none;
+      z-index: 2000;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container" id="loginContainer">
+    <div class="login-box">
+      <h1>Вход в админ-панель</h1>
+      <input type="password" id="adminPassword" placeholder="Введите пароль">
+      <button onclick="login()">Войти</button>
+    </div>
+  </div>
+
+  <div class="admin-container" id="adminContainer">
+    <div class="admin-header">
+      <h1>Управление мероприятиями</h1>
+      <div style="display: flex; gap: 10px;">
+        <button class="btn" style="background: rgba(255,255,255,0.2);" onclick="openPaymentSettings()">💳 Реквизиты</button>
+        <button class="btn btn-primary" onclick="openModal()">+ Создать мероприятие</button>
+      </div>
+    </div>
+    <div class="events-grid" id="eventsGrid"></div>
+  </div>
+
+  <div class="modal" id="eventModal">
+    <div class="modal-content">
+      <h2 id="modalTitle">Новое мероприятие</h2>
+      <form id="eventForm" onsubmit="saveEvent(event)">
+        <input type="hidden" id="eventId">
+        <div class="form-group">
+          <label>Название</label>
+          <input type="text" id="eventName" required placeholder="Название мероприятия">
+        </div>
+        <div class="form-group">
+          <label>Описание</label>
+          <textarea id="eventDescription" placeholder="Подробное описание мероприятия"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Категория</label>
+            <select id="eventCategory" required></select>
+          </div>
+          <div class="form-group">
+            <label>Город</label>
+            <select id="eventCity" required></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Дата</label>
+            <input type="date" id="eventDate" required>
+          </div>
+          <div class="form-group">
+            <label>Время</label>
+            <input type="time" id="eventTime" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Цена (руб)</label>
+            <input type="number" id="eventPrice" required min="0" placeholder="1000">
+          </div>
+          <div class="form-group">
+            <label>Количество мест</label>
+            <input type="number" id="eventSeats" required min="1" placeholder="50">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>URL обложки (опционально)</label>
+          <input type="url" id="eventImage" placeholder="https://example.com/image.jpg">
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button type="button" class="btn" style="flex:1; background: rgba(255,255,255,0.2);" onclick="closeModal()">Отмена</button>
+          <button type="submit" class="btn btn-primary" style="flex:1;">Сохранить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Ссылка скопирована!</div>
+
+  <div class="modal" id="paymentModal">
+    <div class="modal-content">
+      <h2>💳 Реквизиты для оплаты</h2>
+      <form id="paymentForm" onsubmit="savePaymentSettings(event)">
+        <div class="form-group">
+          <label>Номер карты</label>
+          <input type="text" id="cardNumber" required placeholder="0000 0000 0000 0000">
+        </div>
+        <div class="form-group">
+          <label>Имя держателя карты</label>
+          <input type="text" id="cardHolderName" required placeholder="ИВАН ИВАНОВ">
+        </div>
+        <div class="form-group">
+          <label>Название банка</label>
+          <input type="text" id="bankName" required placeholder="Сбербанк">
+        </div>
+        <div class="form-group" style="margin-top: 20px;">
+          <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+            <input type="checkbox" id="sbpEnabled" checked style="width: 20px; height: 20px; cursor: pointer;">
+            <span>СБП включена</span>
+          </label>
+          <small style="display: block; margin-top: 8px; color: rgba(255,255,255,0.6);">Если выключить, пользователи увидят сообщение "Оплата временно недоступна"</small>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button type="button" class="btn" style="flex:1; background: rgba(255,255,255,0.2);" onclick="closePaymentModal()">Отмена</button>
+          <button type="submit" class="btn btn-primary" style="flex:1;">Сохранить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let adminPassword = '';
+    let categories = [];
+    let cities = [];
+    const baseUrl = window.location.origin;
+
+    async function login() {
+      const password = document.getElementById('adminPassword').value;
+      try {
+        const res = await fetch('/api/admin/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+        const result = await res.json();
+        if (result.success) {
+          adminPassword = password;
+          document.getElementById('loginContainer').style.display = 'none';
+          document.getElementById('adminContainer').style.display = 'block';
+          loadData();
+        } else {
+          alert('Неверный пароль');
+        }
+      } catch (err) {
+        alert('Ошибка соединения');
+      }
+    }
+
+    document.getElementById('adminPassword').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') login();
+    });
+
+    async function loadData() {
+      try {
+        const res = await fetch('/api/ticket-data');
+        const data = await res.json();
+        categories = data.categories || [];
+        cities = data.cities || [];
+        
+        const catSelect = document.getElementById('eventCategory');
+        catSelect.innerHTML = categories.map(c => `<option value="${c.id}">${c.nameRu}</option>`).join('');
+        
+        const citySelect = document.getElementById('eventCity');
+        citySelect.innerHTML = cities.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        
+        renderEvents(data.events);
+      } catch (err) {
+        console.error('Error loading data:', err);
+      }
+    }
+
+    function renderEvents(events) {
+      const grid = document.getElementById('eventsGrid');
+      if (events.length === 0) {
+        grid.innerHTML = '<p style="text-align:center; opacity: 0.7;">Нет мероприятий. Создайте первое!</p>';
+        return;
+      }
+      grid.innerHTML = events.map(event => {
+        const slug = generateSlug(event.name);
+        const publicUrl = `${baseUrl}/event/${event.id}`;
+        return `
+          <div class="event-card">
+            <h3>${event.name}</h3>
+            <div class="meta">
+              ${event.cityName} | ${formatDate(event.date)} ${event.time ? event.time.slice(0,5) : ''}<br>
+              ${event.categoryName} | Мест: ${event.availableSeats}
+            </div>
+            <div class="price">${event.price.toLocaleString()} ₽</div>
+            <div class="link-box">
+              <strong>Публичная ссылка:</strong><br>
+              <span id="link-${event.id}">${publicUrl}</span>
+              <button class="copy-btn" onclick="copyLink('${publicUrl}')">Копировать</button>
+            </div>
+            <div class="actions">
+              <button class="btn" style="background: rgba(255,255,255,0.2);" onclick="editEvent(${event.id})">Редактировать</button>
+              <button class="btn btn-danger" onclick="deleteEvent(${event.id})">Удалить</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function generateSlug(name) {
+      return name.toLowerCase()
+        .replace(/[^\w\sа-яё-]/gi, '')
+        .replace(/\s+/g, '-')
+        .replace(/--+/g, '-');
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+    }
+
+    function openModal(event = null) {
+      document.getElementById('eventModal').style.display = 'flex';
+      document.getElementById('modalTitle').textContent = event ? 'Редактировать мероприятие' : 'Новое мероприятие';
+      document.getElementById('eventForm').reset();
+      document.getElementById('eventId').value = event?.id || '';
+      
+      if (event) {
+        document.getElementById('eventName').value = event.name;
+        document.getElementById('eventDescription').value = event.description || '';
+        document.getElementById('eventDate').value = event.date;
+        document.getElementById('eventTime').value = event.time?.slice(0,5) || '';
+        document.getElementById('eventPrice').value = event.price;
+        document.getElementById('eventSeats').value = event.availableSeats;
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('eventModal').style.display = 'none';
+    }
+
+    async function saveEvent(e) {
+      e.preventDefault();
+      const eventId = document.getElementById('eventId').value;
+      const data = {
+        name: document.getElementById('eventName').value,
+        description: document.getElementById('eventDescription').value,
+        categoryId: parseInt(document.getElementById('eventCategory').value),
+        cityId: parseInt(document.getElementById('eventCity').value),
+        date: document.getElementById('eventDate').value,
+        time: document.getElementById('eventTime').value,
+        price: parseFloat(document.getElementById('eventPrice').value),
+        availableSeats: parseInt(document.getElementById('eventSeats').value),
+        coverImageUrl: document.getElementById('eventImage').value || null
+      };
+
+      try {
+        const url = eventId ? `/api/admin/events/${eventId}` : '/api/admin/events';
+        const method = eventId ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+          method,
+          headers: { 
+            'Content-Type': 'application/json',
+            'X-Admin-Password': adminPassword
+          },
+          body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        if (result.success) {
+          closeModal();
+          loadData();
+        } else {
+          alert(result.message || 'Ошибка сохранения');
+        }
+      } catch (err) {
+        alert('Ошибка сохранения');
+      }
+    }
+
+    async function deleteEvent(id) {
+      if (!confirm('Удалить это мероприятие?')) return;
+      try {
+        const res = await fetch(`/api/admin/events/${id}`, { 
+          method: 'DELETE',
+          headers: { 'X-Admin-Password': adminPassword }
+        });
+        const result = await res.json();
+        if (result.success) {
+          loadData();
+        } else {
+          alert(result.message || 'Ошибка удаления');
+        }
+      } catch (err) {
+        alert('Ошибка удаления');
+      }
+    }
+
+    function editEvent(id) {
+      fetch(`/api/ticket-data`)
+        .then(r => r.json())
+        .then(data => {
+          const event = data.events.find(e => e.id === id);
+          if (event) openModal(event);
+        });
+    }
+
+    function copyLink(url) {
+      navigator.clipboard.writeText(url).then(() => {
+        const toast = document.getElementById('toast');
+        toast.style.display = 'block';
+        setTimeout(() => toast.style.display = 'none', 2000);
+      });
+    }
+
+    async function openPaymentSettings() {
+      try {
+        const res = await fetch('/api/payment-settings');
+        const data = await res.json();
+        document.getElementById('cardNumber').value = data.cardNumber || '';
+        document.getElementById('cardHolderName').value = data.cardHolderName || '';
+        document.getElementById('bankName').value = data.bankName || '';
+        document.getElementById('sbpEnabled').checked = data.sbpEnabled !== false;
+        document.getElementById('paymentModal').style.display = 'flex';
+      } catch (err) {
+        document.getElementById('paymentModal').style.display = 'flex';
+      }
+    }
+
+    function closePaymentModal() {
+      document.getElementById('paymentModal').style.display = 'none';
+    }
+
+    async function savePaymentSettings(e) {
+      e.preventDefault();
+      const data = {
+        cardNumber: document.getElementById('cardNumber').value,
+        cardHolderName: document.getElementById('cardHolderName').value,
+        bankName: document.getElementById('bankName').value,
+        sbpEnabled: document.getElementById('sbpEnabled').checked
+      };
+      try {
+        const res = await fetch('/api/admin/payment-settings', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'X-Admin-Password': adminPassword
+          },
+          body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        if (result.success) {
+          closePaymentModal();
+          alert('Реквизиты сохранены');
+        } else {
+          alert(result.message || 'Ошибка сохранения');
+        }
+      } catch (err) {
+        alert('Ошибка сохранения');
+      }
+    }
+  </script>
+
+</body>
+</html>

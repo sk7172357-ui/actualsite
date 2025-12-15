@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <title>Входные карты - Афиша</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: 'Inter', sans-serif; 
+      background: #f5f5f5; 
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    
+    .tickets-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      width: 100%;
+      max-width: 400px;
+    }
+    
+    .ticket {
+      background: white;
+      width: 100%;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .ticket-header {
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    
+    .ticket-logo {
+      font-size: 24px;
+      font-weight: 700;
+      color: #333;
+      letter-spacing: 2px;
+    }
+    
+    .ticket-qr-section {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .qr-code {
+      width: 60px;
+      height: 60px;
+    }
+    
+    .qr-code canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+    
+    .ticket-type {
+      text-align: right;
+    }
+    
+    .ticket-type-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .ticket-type-number {
+      font-size: 12px;
+      color: #666;
+    }
+    
+    .ticket-image {
+      width: 100%;
+      height: 220px;
+      background-size: cover;
+      background-position: center;
+      background-color: #e0e0e0;
+    }
+    
+    .barcode-section {
+      padding: 0;
+      text-align: center;
+    }
+    
+    .barcode-container {
+      background: white;
+      padding: 0;
+    }
+    
+    .ticket-barcode {
+      width: 100%;
+      height: 80px;
+    }
+    
+    .event-title-section {
+      padding: 0 20px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    
+    .event-name {
+      font-size: 20px;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .event-datetime {
+      font-size: 14px;
+      color: #666;
+      margin-top: 5px;
+    }
+    
+    .age-badge {
+      border: 1px solid #999;
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 12px;
+      color: #666;
+    }
+    
+    .divider {
+      height: 1px;
+      background: #eee;
+      margin: 0 20px;
+    }
+    
+    .ticket-details {
+      padding: 20px;
+    }
+    
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+    
+    .detail-label {
+      color: #333;
+      font-weight: 500;
+      font-size: 14px;
+    }
+    
+    .detail-sublabel {
+      color: #999;
+      font-size: 11px;
+    }
+    
+    .detail-value {
+      color: #333;
+      font-size: 14px;
+      text-align: right;
+      font-weight: 500;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 100px 20px;
+      background: white;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 400px;
+    }
+    
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #f0f0f0;
+      border-top-color: #4CAF50;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .error-message {
+      text-align: center;
+      padding: 100px 20px;
+      color: #666;
+      background: white;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 400px;
+    }
+    
+    .error-message h2 {
+      font-size: 20px;
+      margin-bottom: 10px;
+      color: #333;
+    }
+    
+    .pending-message {
+      text-align: center;
+      padding: 60px 20px;
+      color: #666;
+      background: white;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 400px;
+    }
+    
+    .pending-icon {
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+    
+    .pending-message h2 {
+      font-size: 20px;
+      margin-bottom: 10px;
+      color: #333;
+    }
+    
+    .pending-message p {
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    
+    .ticket-count-badge {
+      background: #4CAF50;
+      color: white;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="loading" id="loadingState">
+    <div class="loading-spinner"></div>
+    <p>Загрузка билетов...</p>
+  </div>
+  
+  <div class="error-message" id="errorState" style="display: none;">
+    <h2>Билет не найден</h2>
+    <p>Проверьте правильность ссылки или обратитесь в поддержку</p>
+  </div>
+  
+  <div class="pending-message" id="pendingState" style="display: none;">
+    <div class="pending-icon">⏳</div>
+    <h2>Оплата на проверке</h2>
+    <p>Ваш платеж находится на проверке.<br>Билет будет доступен после подтверждения оплаты администратором.</p>
+  </div>
+  
+  <div class="tickets-container" id="ticketsContainer" style="display: none;">
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderCode = urlParams.get('order');
+    const directMode = urlParams.get('direct') === '1';
+    
+    const monthNames = ['Января', 'Февраля', 'Марта', 'Апреля', 'Мая', 'Июня', 
+                        'Июля', 'Августа', 'Сентября', 'Октября', 'Ноября', 'Декабря'];
+    
+    const ticketTypeNames = {
+      'standard': 'Входная карта',
+      'double': 'Входная карта «для двоих»',
+      'discount': 'Льготная входная карта',
+      'discount_double': 'Льготная входная карта «для двоих»'
+    };
+    
+    const ticketTypePrices = {
+      'standard': 2990,
+      'double': 4980,
+      'discount': 2490,
+      'discount_double': 3490
+    };
+    
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      return `${date.getDate()} ${monthNames[date.getMonth()]}`;
+    }
+    
+    function formatTime(timeStr) {
+      if (!timeStr) return '';
+      return timeStr.substring(0, 5);
+    }
+    
+    function addHours(timeStr, hours) {
+      const [h, m] = timeStr.split(':').map(Number);
+      const newH = (h + hours) % 24;
+      return `${String(newH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    }
+    
+    async function loadTicket() {
+      if (directMode) {
+        await loadDirectTicket();
+        return;
+      }
+      
+      if (!orderCode) {
+        showError();
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/api/ticket/${orderCode}`);
+        if (!response.ok) {
+          showError();
+          return;
+        }
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+          showError();
+          return;
+        }
+        
+        if (data.pending) {
+          showPending();
+          return;
+        }
+        
+        if (!data.ticket) {
+          showError();
+          return;
+        }
+        
+        displayTickets(data.ticket);
+      } catch (error) {
+        console.error('Error loading ticket:', error);
+        showError();
+      }
+    }
+    
+    async function loadDirectTicket() {
+      const eventId = urlParams.get('eventId');
+      const cityId = urlParams.get('cityId');
+      const dateStr = urlParams.get('date');
+      const timeStr = urlParams.get('time');
+      const customerName = urlParams.get('name');
+      
+      if (!eventId) {
+        showError();
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/api/generator/event-templates/${eventId}`);
+        if (!response.ok) {
+          showError();
+          return;
+        }
+        
+        const data = await response.json();
+        if (!data.success || !data.template) {
+          showError();
+          return;
+        }
+        
+        const template = data.template;
+        
+        let cityName = 'Москва';
+        if (cityId) {
+          try {
+            const cityRes = await fetch('/api/generator/cities');
+            const cityData = await cityRes.json();
+            const city = (cityData.cities || []).find(c => c.id == cityId);
+            if (city) cityName = city.name;
+          } catch (e) {}
+        }
+        
+        const ticketNum = String(34000000 + Math.floor(Math.random() * 1000000));
+        
+        const ticket = {
+          event_name: template.name,
+          event_date: dateStr || new Date().toISOString().split('T')[0],
+          event_time: timeStr || '12:00',
+          city_name: cityName,
+          customer_name: customerName || 'Гость',
+          total_price: 2990,
+          order_code: 'DIR-' + ticketNum.slice(-6),
+          orderId: parseInt(ticketNum.slice(-6)),
+          image_url: template.image_url,
+          ticket_image_url: template.ticket_image_url,
+          tickets: { standard: 1 }
+        };
+        
+        displayTickets(ticket);
+      } catch (error) {
+        console.error('Error loading direct ticket:', error);
+        showError();
+      }
+    }
+    
+    function showError() {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('errorState').style.display = 'block';
+    }
+    
+    function showPending() {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('pendingState').style.display = 'block';
+    }
+    
+    function displayTickets(ticketData) {
+      if (!ticketData) {
+        showError();
+        return;
+      }
+      
+      document.getElementById('loadingState').style.display = 'none';
+      
+      const container = document.getElementById('ticketsContainer');
+      container.style.display = 'flex';
+      container.innerHTML = '';
+      
+      const tickets = ticketData.tickets || { standard: 1 };
+      
+      let ticketCards = [];
+      let ticketIndex = 0;
+      
+      for (const [ticketType, quantity] of Object.entries(tickets)) {
+        if (quantity > 0) {
+          for (let i = 0; i < quantity; i++) {
+            ticketCards.push({
+              type: ticketType,
+              typeName: ticketTypeNames[ticketType] || 'Входная карта',
+              price: ticketTypePrices[ticketType] || 2990,
+              index: ticketIndex++
+            });
+          }
+        }
+      }
+      
+      if (ticketCards.length === 0) {
+        ticketCards.push({
+          type: 'standard',
+          typeName: 'Входная карта',
+          price: ticketData.total_price || 2990,
+          index: 0
+        });
+      }
+      
+      if (ticketCards.length > 1) {
+        const badge = document.createElement('div');
+        badge.className = 'ticket-count-badge';
+        badge.textContent = `${ticketCards.length} билет${ticketCards.length > 1 ? (ticketCards.length < 5 ? 'а' : 'ов') : ''}`;
+        container.appendChild(badge);
+      }
+      
+      ticketCards.forEach((card, idx) => {
+        const ticketEl = createTicketCard(ticketData, card, idx);
+        container.appendChild(ticketEl);
+      });
+      
+      setTimeout(() => {
+        ticketCards.forEach((card, idx) => {
+          const baseNum = 34000000;
+          const orderCodeStr = ticketData.order_code || '';
+          const orderNum = parseInt(orderCodeStr.replace(/\D/g, '').slice(-6) || '0', 36) % 1000000;
+          const ticketNum = String(baseNum + orderNum + (ticketData.orderId || 0) + idx);
+          
+          try {
+            JsBarcode(`#barcode-${idx}`, ticketNum, {
+              format: "CODE128",
+              width: 4,
+              height: 70,
+              displayValue: true,
+              fontSize: 14,
+              margin: 0
+            });
+          } catch (e) {
+            console.error('Barcode error:', e);
+          }
+          
+          if (typeof QRCode !== 'undefined') {
+            const qrContainer = document.getElementById(`qrCode-${idx}`);
+            if (qrContainer) {
+              QRCode.toCanvas(document.createElement('canvas'), ticketNum, { width: 60 }, function(error, canvas) {
+                if (!error && qrContainer) {
+                  qrContainer.innerHTML = '';
+                  qrContainer.appendChild(canvas);
+                }
+              });
+            }
+          }
+        });
+      }, 100);
+    }
+    
+    function createTicketCard(ticketData, card, idx) {
+      const baseNum = 34000000;
+      const orderCodeStr = ticketData.order_code || '';
+      const orderNum = parseInt(orderCodeStr.replace(/\D/g, '').slice(-6) || '0', 36) % 1000000;
+      const ticketNum = String(baseNum + orderNum + (ticketData.orderId || 0) + idx);
+      
+      const imageUrl = ticketData.ticket_image_url || ticketData.image_url;
+      const imageStyle = imageUrl 
+        ? `background-image: url(${imageUrl})`
+        : 'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+      
+      let dateTimeStr = '';
+      if (ticketData.event_date) {
+        dateTimeStr = formatDate(ticketData.event_date);
+      }
+      if (ticketData.event_time) {
+        const endTime = addHours(ticketData.event_time, 7);
+        dateTimeStr += ` ${formatTime(ticketData.event_time)} - ${endTime}`;
+      }
+      
+      const ticketEl = document.createElement('div');
+      ticketEl.className = 'ticket';
+      ticketEl.innerHTML = `
+        <div class="ticket-header">
+          <div class="ticket-logo">AFISHA</div>
+          <div class="ticket-qr-section">
+            <div class="qr-code" id="qrCode-${idx}"></div>
+            <div class="ticket-type">
+              <div class="ticket-type-title">${card.typeName}</div>
+              <div class="ticket-type-number">E-card #${ticketNum}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="ticket-image" style="${imageStyle}"></div>
+        
+        <div class="barcode-section">
+          <div class="barcode-container">
+            <svg id="barcode-${idx}" class="ticket-barcode"></svg>
+          </div>
+        </div>
+        
+        <div class="event-title-section">
+          <div>
+            <div class="event-name">${ticketData.event_name || 'Мероприятие'}</div>
+            <div class="event-datetime">${dateTimeStr}</div>
+          </div>
+          <div class="age-badge">18+</div>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="ticket-details">
+          <div class="detail-row">
+            <div>
+              <div class="detail-label">Город</div>
+              <div class="detail-sublabel">City</div>
+            </div>
+            <div class="detail-value">${ticketData.city_name || 'Москва'}</div>
+          </div>
+          
+          <div class="detail-row">
+            <div>
+              <div class="detail-label">Карта</div>
+              <div class="detail-sublabel">Cards</div>
+            </div>
+            <div class="detail-value">${card.typeName}</div>
+          </div>
+          
+          <div class="detail-row">
+            <div>
+              <div class="detail-label">Имя, фамилия</div>
+              <div class="detail-sublabel">Name</div>
+            </div>
+            <div class="detail-value">${ticketData.customer_name || ''}</div>
+          </div>
+          
+          <div class="detail-row">
+            <div>
+              <div class="detail-label">Номер заказа #</div>
+              <div class="detail-sublabel">Order number #</div>
+            </div>
+            <div class="detail-value">${ticketNum}</div>
+          </div>
+          
+          <div class="detail-row">
+            <div>
+              <div class="detail-label">Стоимость</div>
+              <div class="detail-sublabel">Price</div>
+            </div>
+            <div class="detail-value">${card.price} ₽</div>
+          </div>
+        </div>
+      `;
+      
+      return ticketEl;
+    }
+    
+    loadTicket();
+  </script>
+<script src="//code.tidio.co/ufjldpy2fgwbem1lrdwd8yqubddfk15k.js" async></script>
+</body>
+</html>

@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <title>Редактирование мероприятий - Афиша</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #f5f5f5; min-height: 100vh; }
+    
+    .auth-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    .auth-modal {
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+    }
+    .auth-modal h2 { font-size: 24px; margin-bottom: 10px; }
+    .auth-modal p { color: #666; margin-bottom: 20px; }
+    .auth-modal input {
+      width: 100%;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      margin-bottom: 15px;
+    }
+    .auth-modal button {
+      width: 100%;
+      padding: 15px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .auth-error { color: #f44336; font-size: 14px; margin-top: 10px; display: none; }
+    
+    .header {
+      background: linear-gradient(135deg, #4CAF50 0%, #ff9800 50%, #f44336 100%);
+      padding: 15px 30px;
+      display: flex;
+      align-items: center;
+      gap: 30px;
+    }
+    .logo { font-size: 20px; font-weight: 700; color: white; }
+    .nav { display: flex; gap: 25px; }
+    .nav a { color: rgba(255,255,255,0.9); text-decoration: none; font-size: 14px; padding: 8px 0; border-bottom: 2px solid transparent; }
+    .nav a:hover, .nav a.active { color: white; border-bottom-color: white; }
+    .site-link { margin-left: auto; color: #4CAF50; text-decoration: none; font-size: 14px; }
+    
+    .content { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+    .page-title { font-size: 24px; font-weight: 600; color: #333; margin-bottom: 20px; }
+    
+    .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+    .tab { padding: 10px 20px; background: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
+    .tab.active { background: #4CAF50; color: white; }
+    
+    .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
+    
+    .event-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .event-card-header { display: flex; gap: 15px; margin-bottom: 15px; }
+    .event-image {
+      width: 80px; height: 80px;
+      border-radius: 8px;
+      background: #f0f0f0;
+      background-size: cover;
+      background-position: center;
+      flex-shrink: 0;
+    }
+    .event-info { flex: 1; }
+    .event-name { font-weight: 600; font-size: 15px; margin-bottom: 5px; }
+    .event-category { font-size: 12px; color: #666; }
+    .event-status { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; margin-top: 5px; }
+    .event-status.active { background: #e8f5e9; color: #4CAF50; }
+    .event-status.inactive { background: #ffebee; color: #f44336; }
+    
+    .event-actions { display: flex; gap: 10px; margin-top: 15px; }
+    .event-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-family: inherit;
+    }
+    .btn-edit { background: #e3f2fd; color: #1976d2; }
+    .btn-toggle { background: #fff3e0; color: #f57c00; }
+    .btn-toggle.active { background: #e8f5e9; color: #4CAF50; }
+    
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-overlay.show { display: flex; }
+    
+    .modal {
+      background: white;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-header {
+      padding: 20px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-header h2 { font-size: 18px; }
+    .modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; }
+    
+    .modal-body { padding: 20px; }
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; font-size: 14px; color: #333; margin-bottom: 8px; font-weight: 500; }
+    .form-group input, .form-group textarea, .form-group select {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    .form-group textarea { min-height: 100px; resize: vertical; }
+    .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #4CAF50; }
+    
+    .image-preview {
+      width: 100%;
+      height: 150px;
+      border-radius: 8px;
+      background: #f0f0f0;
+      background-size: cover;
+      background-position: center;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #999;
+    }
+    
+    .modal-footer {
+      padding: 20px;
+      border-top: 1px solid #eee;
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    .modal-btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-cancel { background: #f5f5f5; color: #666; }
+    .btn-save { background: #4CAF50; color: white; }
+    
+    .links-section { margin-top: 40px; }
+    .links-section h3 { font-size: 18px; margin-bottom: 15px; }
+    .link-card {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .link-info strong { display: block; margin-bottom: 3px; }
+    .link-info span { font-size: 13px; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="auth-overlay" id="authOverlay">
+    <div class="auth-modal">
+      <h2>Вход в админ-панель</h2>
+      <p>Введите пароль для доступа</p>
+      <input type="password" id="authPassword" placeholder="Пароль" onkeypress="if(event.key==='Enter')checkAuth()">
+      <button onclick="checkAuth()">Войти</button>
+      <div class="auth-error" id="authError">Неверный пароль</div>
+    </div>
+  </div>
+  
+  <header class="header">
+    <div class="logo">Админ-панель</div>
+    <nav class="nav">
+      <a href="/admin-events" class="active">Редактирование мероприятий</a>
+    </nav>
+  </header>
+  
+  <div class="content">
+    <h1 class="page-title">Редактирование мероприятий</h1>
+    
+    <div class="tabs" id="categoryTabs"></div>
+    
+    <div class="cards-grid" id="eventsGrid"></div>
+    
+    <div class="links-section">
+      <h3>Сгенерированные ссылки</h3>
+      <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+        <button class="event-btn" style="background: #ffebee; color: #f44336; flex: none; padding: 10px 20px;" onclick="deleteAllLinks()">Удалить все ссылки</button>
+        <span style="color: #666; font-size: 13px; align-self: center;" id="linksCount"></span>
+      </div>
+      <div id="linksContainer"></div>
+    </div>
+    
+    <div class="links-section" style="margin-top: 40px;">
+      <h3>Реквизиты для оплаты</h3>
+      <div style="background: white; padding: 20px; border-radius: 12px; max-width: 500px;">
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: 500;">Номер карты</label>
+          <input type="text" id="paymentCardNumber" placeholder="2200 7007 1234 5678" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px;">
+        </div>
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: 500;">ФИО получателя</label>
+          <input type="text" id="paymentCardHolder" placeholder="Иванов Иван Иванович" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px;">
+        </div>
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: 500;">Название банка</label>
+          <input type="text" id="paymentBankName" placeholder="Сбербанк" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px;">
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+            <input type="checkbox" id="paymentSbpEnabled" checked style="width: 20px; height: 20px; cursor: pointer;">
+            <span style="font-weight: 500;">СБП включена</span>
+          </label>
+          <small style="display: block; margin-top: 8px; color: #666;">Если выключить, пользователи увидят "Оплата временно недоступна"</small>
+        </div>
+        <button onclick="savePaymentSettings()" style="padding: 12px 24px; background: #4CAF50; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer;">Сохранить реквизиты</button>
+      </div>
+    </div>
+    
+    <div class="links-section" style="margin-top: 40px;">
+      <h3>Управление городами</h3>
+      <div style="background: white; padding: 20px; border-radius: 12px; max-width: 600px;">
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+          <input type="text" id="newCityName" placeholder="Название города" style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px;">
+          <button onclick="addCity()" style="padding: 12px 24px; background: #4CAF50; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer;">Добавить</button>
+        </div>
+        <div id="citiesList" style="max-height: 300px; overflow-y: auto;">
+          <p style="color: #999;">Загрузка городов...</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="links-section" style="margin-top: 40px;">
+      <h3>Генератор ссылок возврата</h3>
+      <div style="background: white; padding: 20px; border-radius: 12px; max-width: 600px;">
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+          <input type="number" id="refundAmount" placeholder="Сумма возврата (руб.)" min="100" style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px;">
+          <button onclick="createRefundLink()" style="padding: 12px 24px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer;">Создать ссылку</button>
+        </div>
+        <div id="newRefundLink" style="display: none; background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+          <p style="margin-bottom: 10px; font-weight: 500; color: #4CAF50;">Ссылка создана!</p>
+          <input type="text" id="newRefundUrl" readonly style="width: 100%; padding: 10px; border: 1px solid #4CAF50; border-radius: 6px; font-size: 13px; margin-bottom: 10px;">
+          <button onclick="copyRefundLink()" style="padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 6px; font-size: 13px; cursor: pointer;">Копировать</button>
+        </div>
+        <h4 style="font-size: 14px; margin-bottom: 10px; color: #333;">Активные ссылки возврата</h4>
+        <div id="refundsList" style="max-height: 400px; overflow-y: auto;">
+          <p style="color: #999; font-size: 13px;">Загрузка...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="modal-overlay" id="editModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Редактировать мероприятие</h2>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editEventId">
+        <div class="form-group">
+          <label>Название</label>
+          <input type="text" id="editName">
+        </div>
+        <div class="form-group">
+          <label>Описание</label>
+          <textarea id="editDescription"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Фотографии мероприятия</label>
+          <div id="imagesContainer" style="border: 1px solid #ddd; border-radius: 8px; padding: 10px; margin-bottom: 10px;">
+            <p style="color: #999; font-size: 13px;">Загрузка...</p>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <input type="text" id="newImageUrl" placeholder="Вставьте URL изображения..." style="flex: 1;">
+            <button type="button" onclick="addImage()" style="padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer;">Добавить</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Адрес по городам</label>
+          <div id="cityAddressesContainer" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px; margin-top: 5px;">
+            <p style="color: #999; font-size: 13px;">Загрузка городов...</p>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Картинка для билета (URL)</label>
+          <input type="text" id="editTicketImageUrl" placeholder="https://example.com/ticket-image.jpg">
+          <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">Эта картинка будет отображаться на билете после подтверждения оплаты</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn btn-cancel" onclick="closeModal()">Отмена</button>
+        <button class="modal-btn btn-save" onclick="saveEvent()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="modal-overlay" id="editLinkModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Редактировать ссылку</h2>
+        <button class="modal-close" onclick="closeLinkModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editLinkId">
+        <div class="form-group">
+          <label>Адрес проведения</label>
+          <input type="text" id="editVenueAddress" placeholder="ул. Маркова, 12">
+        </div>
+        <div class="form-group">
+          <label>Осталось мест</label>
+          <input type="number" id="editSeats" min="0">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn btn-cancel" onclick="closeLinkModal()">Отмена</button>
+        <button class="modal-btn btn-save" onclick="saveLinkChanges()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    let categories = [];
+    let eventTemplates = [];
+    let links = [];
+    let selectedCategory = null;
+    
+    // Check auth on page load - redirect to login if no valid token
+    async function checkAuthAndInit() {
+      const token = localStorage.getItem('adminToken');
+      
+      if (!token) {
+        window.location.href = '/admin-login?redirect=/admin-events';
+        return;
+      }
+      
+      // Validate token with server
+      try {
+        const res = await fetch('/api/admin/validate-session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          }
+        });
+        
+        const data = await res.json();
+        
+        if (data.valid) {
+          document.getElementById('authOverlay').style.display = 'none';
+          init();
+        } else {
+          localStorage.removeItem('adminToken');
+          window.location.href = '/admin-login?redirect=/admin-events';
+        }
+      } catch (err) {
+        console.error('Auth validation error:', err);
+        localStorage.removeItem('adminToken');
+        window.location.href = '/admin-login?redirect=/admin-events';
+      }
+    }
+    
+    // Legacy checkAuth for overlay form (if somehow shown)
+    async function checkAuth() {
+      const password = document.getElementById('authPassword').value;
+      try {
+        const res = await fetch('/api/admin/verify-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+        const data = await res.json();
+        if (data.success && data.token) {
+          localStorage.setItem('adminToken', data.token);
+          document.getElementById('authOverlay').style.display = 'none';
+          init();
+        } else {
+          document.getElementById('authError').style.display = 'block';
+        }
+      } catch (err) {
+        document.getElementById('authError').style.display = 'block';
+      }
+    }
+    
+    // Helper to get auth headers for API calls
+    function getAuthHeaders() {
+      const token = localStorage.getItem('adminToken');
+      return { 
+        'Authorization': 'Bearer ' + (token || ''),
+        'X-Admin-Token': token || ''
+      };
+    }
+    
+    // Start auth check
+    checkAuthAndInit();
+    
+    async function init() {
+      await Promise.all([loadCategories(), loadLinks(), loadPaymentSettings(), loadCities(), loadRefunds()]);
+    }
+    
+    let refunds = [];
+    
+    async function loadRefunds() {
+      try {
+        const res = await fetch('/api/admin/refunds', {
+          headers: getAuthHeaders()
+        });
+        const data = await res.json();
+        refunds = data.refunds || [];
+        renderRefundsList();
+      } catch (err) {
+        console.error('Error loading refunds:', err);
+      }
+    }
+    
+    function renderRefundsList() {
+      const container = document.getElementById('refundsList');
+      if (refunds.length === 0) {
+        container.innerHTML = '<p style="color: #999; font-size: 13px;">Нет ссылок возврата</p>';
+        return;
+      }
+      
+      container.innerHTML = refunds.map(r => {
+        const statusColors = {
+          pending: '#ff9800',
+          submitted: '#2196f3',
+          approved: '#4CAF50',
+          rejected: '#f44336'
+        };
+        const statusTexts = {
+          pending: 'Ожидает',
+          submitted: 'Отправлена',
+          approved: 'Одобрен',
+          rejected: 'Отклонён'
+        };
+        const statusColor = statusColors[r.status] || '#666';
+        const statusText = statusTexts[r.status] || r.status;
+        const createdDate = new Date(r.created_at).toLocaleString('ru-RU');
+        
+        return `
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid #eee; border-radius: 8px; margin-bottom: 8px; background: ${r.is_active ? '#fff' : '#f9f9f9'};">
+            <div style="flex: 1;">
+              <div style="font-weight: 600; font-size: 15px; color: #333;">${r.amount.toLocaleString('ru-RU')} ₽</div>
+              <div style="font-size: 12px; color: #666; margin-top: 2px;">${r.refund_code}</div>
+              <div style="font-size: 11px; color: #999; margin-top: 2px;">${createdDate}</div>
+              ${r.customer_name ? `<div style="font-size: 12px; color: #333; margin-top: 4px;">👤 ${r.customer_name}</div>` : ''}
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="padding: 4px 10px; border-radius: 12px; font-size: 11px; background: ${statusColor}20; color: ${statusColor};">${statusText}</span>
+              <button onclick="copyRefundUrl('${r.refund_code}')" style="padding: 6px 12px; background: #e3f2fd; color: #1976d2; border: none; border-radius: 6px; cursor: pointer; font-size: 11px;">📋 Копировать</button>
+              <button onclick="toggleRefund(${r.id})" style="padding: 6px 12px; background: ${r.is_active ? '#fff3e0' : '#e8f5e9'}; color: ${r.is_active ? '#f57c00' : '#4CAF50'}; border: none; border-radius: 6px; cursor: pointer; font-size: 11px;">${r.is_active ? 'Выкл' : 'Вкл'}</button>
+              <button onclick="deleteRefund(${r.id})" style="padding: 6px 12px; background: #ffebee; color: #f44336; border: none; border-radius: 6px; cursor: pointer; font-size: 11px;">✕</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    async function createRefundLink() {
+      const amountInput = document.getElementById('refundAmount');
+      const amount = parseInt(amountInput.value);
+      
+      if (!amount || amount < 100) {
+        alert('Укажите сумму возврата (минимум 100 руб.)');
+        return;
+      }
+      
+      try {
+        const res = await fetch('/api/admin/refund/create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders()
+          },
+          body: JSON.stringify({ amount })
+        });
+        
+        const data = await res.json();
+        
+        if (data.success) {
+          const refundUrl = `${window.location.origin}/refund/${data.refund_code}`;
+          document.getElementById('newRefundUrl').value = refundUrl;
+          document.getElementById('newRefundLink').style.display = 'block';
+          amountInput.value = '';
+          await loadRefunds();
+        } else {
+          alert(data.message || 'Ошибка создания ссылки');
+        }
+      } catch (err) {
+        console.error('Error creating refund:', err);
+        alert('Ошибка создания ссылки');
+      }
+    }
+    
+    function copyRefundLink() {
+      const url = document.getElementById('newRefundUrl').value;
+      navigator.clipboard.writeText(url);
+      alert('Ссылка скопирована!');
+    }
+    
+    function copyRefundUrl(code) {
+      const url = `${window.location.origin}/refund/${code}`;
+      navigator.clipboard.writeText(url);
+      alert('Ссылка скопирована!');
+    }
+    
+    async function toggleRefund(id) {
+      try {
+        await fetch(`/api/admin/refunds/${id}/toggle`, {
+          method: 'POST',
+          headers: getAuthHeaders()
+        });
+        await loadRefunds();
+      } catch (err) {
+        console.error('Error toggling refund:', err);
+      }
+    }
+    
+    async function deleteRefund(id) {
+      if (!confirm('Удалить эту ссылку возврата?')) return;
+      
+      try {
+        await fetch(`/api/admin/refunds/${id}`, {
+          method: 'DELETE',
+          headers: getAuthHeaders()
+        });
+        await loadRefunds();
+      } catch (err) {
+        console.error('Error deleting refund:', err);
+      }
+    }
+    
+    async function loadPaymentSettings() {
+      try {
+        const res = await fetch('/api/payment-settings');
+        const data = await res.json();
+        document.getElementById('paymentCardNumber').value = data.cardNumber || '';
+        document.getElementById('paymentCardHolder').value = data.cardHolderName || '';
+        document.getElementById('paymentBankName').value = data.bankName || '';
+        document.getElementById('paymentSbpEnabled').checked = data.sbpEnabled !== false;
+      } catch (err) {
+        console.error('Error loading payment settings:', err);
+      }
+    }
+    
+    async function savePaymentSettings() {
+      try {
+        const cardNumber = document.getElementById('paymentCardNumber').value;
+        const cardHolderName = document.getElementById('paymentCardHolder').value;
+        const bankName = document.getElementById('paymentBankName').value;
+        const sbpEnabled = document.getElementById('paymentSbpEnabled').checked;
+        
+        const res = await fetch('/api/admin/payment-settings', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders()
+          },
+          body: JSON.stringify({ cardNumber, cardHolderName, bankName, sbpEnabled })
+        });
+        
+        if (res.ok) {
+          alert('Реквизиты сохранены');
+        } else {
+          alert('Ошибка сохранения');
+        }
+      } catch (err) {
+        console.error('Error saving payment settings:', err);
+        alert('Ошибка сохранения');
+      }
+    }
+    
+    async function loadCities() {
+      try {
+        const res = await fetch('/api/generator/cities');
+        const data = await res.json();
+        const cities = data.cities || [];
+        renderCitiesList(cities);
+      } catch (err) {
+        console.error('Error loading cities:', err);
+      }
+    }
+    
+    function renderCitiesList(cities) {
+      const container = document.getElementById('citiesList');
+      if (cities.length === 0) {
+        container.innerHTML = '<p style="color: #999;">Нет городов</p>';
+        return;
+      }
+      
+      container.innerHTML = cities.map(city => `
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee;">
+          <span>${city.name}</span>
+          <button onclick="deleteCity(${city.id})" style="padding: 6px 12px; background: #ffebee; color: #f44336; border: none; border-radius: 6px; cursor: pointer; font-size: 12px;">Удалить</button>
+        </div>
+      `).join('');
+    }
+    
+    async function addCity() {
+      const nameInput = document.getElementById('newCityName');
+      const name = nameInput.value.trim();
+      if (!name) {
+        alert('Введите название города');
+        return;
+      }
+      
+      try {
+        const res = await fetch('/api/admin/cities', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders()
+          },
+          body: JSON.stringify({ name })
+        });
+        
+        if (res.ok) {
+          nameInput.value = '';
+          await loadCities();
+        } else {
+          const data = await res.json();
+          alert(data.message || 'Ошибка добавления города');
+        }
+      } catch (err) {
+        console.error('Error adding city:', err);
+        alert('Ошибка добавления города');
+      }
+    }
+    
+    async function deleteCity(cityId) {
+      if (!confirm('Удалить этот город? Это также удалит все связанные ссылки.')) return;
+      
+      try {
+        const res = await fetch(`/api/admin/cities/${cityId}`, {
+          method: 'DELETE',
+          headers: getAuthHeaders()
+        });
+        
+        if (res.ok) {
+          await loadCities();
+        } else {
+          const data = await res.json();
+          alert(data.message || 'Ошибка удаления города');
+        }
+      } catch (err) {
+        console.error('Error deleting city:', err);
+        alert('Ошибка удаления города');
+      }
+    }
+    
+    async function loadCategories() {
+      try {
+        const res = await fetch('/api/generator/categories');
+        const data = await res.json();
+        categories = data.categories || [];
+        renderCategoryTabs();
+        if (categories.length > 0) {
+          selectCategory(categories[0].id);
+        }
+      } catch (err) {
+        console.error('Error loading categories:', err);
+      }
+    }
+    
+    async function loadEventTemplates(categoryId) {
+      try {
+        const res = await fetch(`/api/generator/event-templates?category_id=${categoryId}`);
+        const data = await res.json();
+        eventTemplates = data.templates || [];
+        renderEvents();
+      } catch (err) {
+        console.error('Error loading events:', err);
+      }
+    }
+    
+    async function loadLinks() {
+      try {
+        const res = await fetch('/api/generator/links');
+        const data = await res.json();
+        links = data.links || [];
+        renderLinks();
+      } catch (err) {
+        console.error('Error loading links:', err);
+      }
+    }
+    
+    function renderCategoryTabs() {
+      const container = document.getElementById('categoryTabs');
+      container.innerHTML = categories.map(cat => `
+        <button class="tab ${selectedCategory === cat.id ? 'active' : ''}" onclick="selectCategory(${cat.id})">
+          ${cat.name_ru}
+        </button>
+      `).join('');
+    }
+    
+    function selectCategory(categoryId) {
+      selectedCategory = categoryId;
+      renderCategoryTabs();
+      loadEventTemplates(categoryId);
+    }
+    
+    function renderEvents() {
+      const grid = document.getElementById('eventsGrid');
+      grid.innerHTML = eventTemplates.map(event => `
+        <div class="event-card">
+          <div class="event-card-header">
+            <div class="event-image" style="background-image: url('${event.image_url || ''}')"></div>
+            <div class="event-info">
+              <div class="event-name">${event.name}</div>
+              <div class="event-category">${getCategoryName(selectedCategory)}</div>
+              <span class="event-status ${event.is_active !== false ? 'active' : 'inactive'}">
+                ${event.is_active !== false ? 'Активно' : 'Выключено'}
+              </span>
+            </div>
+          </div>
+          <div class="event-actions">
+            <button class="event-btn btn-edit" onclick="openEditModal(${event.id})">Редактировать</button>
+            <button class="event-btn btn-toggle ${event.is_active !== false ? 'active' : ''}" 
+                    onclick="toggleEvent(${event.id}, ${event.is_active === false})">
+              ${event.is_active !== false ? 'Выключить' : 'Включить'}
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    function renderLinks() {
+      const container = document.getElementById('linksContainer');
+      const countEl = document.getElementById('linksCount');
+      countEl.textContent = links.length > 0 ? 'Всего: ' + links.length + ' ссылок' : '';
+      
+      if (links.length === 0) {
+        container.innerHTML = '<p style="color:#999;text-align:center;padding:20px;">Нет сгенерированных ссылок</p>';
+        return;
+      }
+      
+      container.innerHTML = links.map(link => `
+        <div class="link-card">
+          <div class="link-info">
+            <strong>${link.event_name}</strong>
+            <span>${link.city_name} - ${formatDate(link.event_date)} ${formatTime(link.event_time)} | ${link.link_code}</span>
+          </div>
+          <div class="link-actions" style="display: flex; gap: 8px;">
+            <button class="event-btn btn-edit" onclick="openLinkEditModal(${link.id})">Адрес</button>
+            <button class="event-btn btn-toggle ${link.is_active ? 'active' : ''}" 
+                    onclick="toggleLink(${link.id}, ${!link.is_active})">
+              ${link.is_active ? 'Активна' : 'Выкл'}
+            </button>
+            <button class="event-btn" style="background: #ffebee; color: #f44336;" onclick="deleteLink(${link.id}, '${link.link_code}')">Удалить</button>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    async function deleteLink(linkId, linkCode) {
+      if (!confirm('Удалить ссылку ' + linkCode + '?')) return;
+      
+      try {
+        const res = await fetch('/api/generator/links/' + linkId, {
+          method: 'DELETE',
+          headers: getAuthHeaders()
+        });
+        
+        if (res.ok) {
+          await loadLinks();
+        } else {
+          alert('Ошибка удаления');
+        }
+      } catch (err) {
+        console.error('Error deleting link:', err);
+        alert('Ошибка удаления');
+      }
+    }
+    
+    async function deleteAllLinks() {
+      if (links.length === 0) {
+        alert('Нет ссылок для удаления');
+        return;
+      }
+      
+      if (!confirm('Удалить ВСЕ ' + links.length + ' ссылки? Это действие нельзя отменить!')) return;
+      
+      try {
+        let deleted = 0;
+        for (const link of links) {
+          const res = await fetch('/api/generator/links/' + link.id, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+          });
+          if (res.ok) deleted++;
+        }
+        
+        alert('Удалено ' + deleted + ' из ' + links.length + ' ссылок');
+        await loadLinks();
+      } catch (err) {
+        console.error('Error deleting all links:', err);
+        alert('Ошибка удаления');
+      }
+    }
+    
+    function getCategoryName(categoryId) {
+      const cat = categories.find(c => c.id === categoryId);
+      return cat ? cat.name_ru : '';
+    }
+    
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      const months = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+      return `${date.getDate()} ${months[date.getMonth()]}`;
+    }
+    
+    function formatTime(timeStr) {
+      if (!timeStr) return '';
+      const parts = timeStr.split(':');
+      return `${parts[0]}:${parts[1]}`;
+    }
+    
+    let allCities = [];
+    let eventAddresses = {};
+    let eventImages = [];
+    let currentEditEventId = null;
+    
+    async function openEditModal(eventId) {
+      const event = eventTemplates.find(e => e.id === eventId);
+      if (!event) return;
+      
+      currentEditEventId = eventId;
+      document.getElementById('editEventId').value = event.id;
+      document.getElementById('editName').value = event.name;
+      document.getElementById('editDescription').value = event.description || '';
+      document.getElementById('editTicketImageUrl').value = event.ticket_image_url || '';
+      document.getElementById('newImageUrl').value = '';
+      
+      // Load images and cities
+      await Promise.all([loadImagesForEvent(eventId), loadCitiesForEvent(eventId)]);
+      
+      document.getElementById('editModal').classList.add('show');
+    }
+    
+    async function loadImagesForEvent(eventId) {
+      const container = document.getElementById('imagesContainer');
+      container.innerHTML = '<p style="color: #999;">Загрузка...</p>';
+      
+      try {
+        const res = await fetch(`/api/generator/event-templates/${eventId}/images`);
+        const data = await res.json();
+        eventImages = data.images || [];
+        renderImages();
+      } catch (err) {
+        console.error('Error loading images:', err);
+        container.innerHTML = '<p style="color: #f44;">Ошибка загрузки</p>';
+      }
+    }
+    
+    function renderImages() {
+      const container = document.getElementById('imagesContainer');
+      if (eventImages.length === 0) {
+        container.innerHTML = '<p style="color: #999; text-align: center;">Нет изображений. Добавьте URL ниже.</p>';
+        return;
+      }
+      
+      container.innerHTML = eventImages.map((img, i) => `
+        <div style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center; background: #f9f9f9; padding: 8px; border-radius: 8px;">
+          <img src="${img.image_url}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px;" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect fill=%22%23ddd%22 width=%22100%22 height=%22100%22/></svg>'">
+          <span style="flex: 1; font-size: 12px; color: #666; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${img.image_url}</span>
+          <button onclick="deleteImage(${img.id})" style="padding: 5px 10px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Удалить</button>
+        </div>
+      `).join('');
+    }
+    
+    async function addImage() {
+      const input = document.getElementById('newImageUrl');
+      const url = input.value.trim();
+      if (!url) {
+        alert('Введите URL изображения');
+        return;
+      }
+      
+      try {
+        const res = await fetch(`/api/generator/event-templates/${currentEditEventId}/images`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image_url: url })
+        });
+        
+        if (res.ok) {
+          input.value = '';
+          await loadImagesForEvent(currentEditEventId);
+        } else {
+          alert('Ошибка добавления');
+        }
+      } catch (err) {
+        console.error('Error adding image:', err);
+        alert('Ошибка соединения');
+      }
+    }
+    
+    async function deleteImage(imageId) {
+      if (!confirm('Удалить это изображение?')) return;
+      
+      try {
+        const res = await fetch(`/api/generator/event-templates/${currentEditEventId}/images/${imageId}`, {
+          method: 'DELETE'
+        });
+        
+        if (res.ok) {
+          await loadImagesForEvent(currentEditEventId);
+        }
+      } catch (err) {
+        console.error('Error deleting image:', err);
+      }
+    }
+    
+    async function loadCitiesForEvent(eventId) {
+      const container = document.getElementById('cityAddressesContainer');
+      container.innerHTML = '<p style="color: #999;">Загрузка...</p>';
+      
+      try {
+        // Load all cities
+        const citiesRes = await fetch('/api/generator/cities');
+        const citiesData = await citiesRes.json();
+        allCities = citiesData.cities || [];
+        
+        // Load addresses for this event
+        const addressesRes = await fetch(`/api/generator/event-templates/${eventId}/addresses`);
+        const addressesData = await addressesRes.json();
+        eventAddresses = {};
+        (addressesData.addresses || []).forEach(a => {
+          eventAddresses[a.city_id] = a.venue_address;
+        });
+        
+        renderCityAddresses();
+      } catch (err) {
+        console.error('Error loading cities:', err);
+        container.innerHTML = '<p style="color: #f44;">Ошибка загрузки городов</p>';
+      }
+    }
+    
+    function renderCityAddresses() {
+      const container = document.getElementById('cityAddressesContainer');
+      if (allCities.length === 0) {
+        container.innerHTML = '<p style="color: #999;">Нет городов</p>';
+        return;
+      }
+      
+      container.innerHTML = allCities.map(city => `
+        <div style="display: flex; gap: 10px; margin-bottom: 8px; align-items: center;">
+          <span style="min-width: 120px; font-size: 13px;">${city.name}</span>
+          <input type="text" 
+                 id="cityAddr_${city.id}" 
+                 value="${eventAddresses[city.id] || ''}" 
+                 placeholder="Адрес не указан"
+                 style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px;">
+        </div>
+      `).join('');
+    }
+    
+    function closeModal() {
+      document.getElementById('editModal').classList.remove('show');
+    }
+    
+    async function saveEvent() {
+      const eventId = document.getElementById('editEventId').value;
+      const name = document.getElementById('editName').value;
+      const description = document.getElementById('editDescription').value;
+      const ticketImageUrl = document.getElementById('editTicketImageUrl').value.trim();
+      
+      // Collect city addresses
+      const addresses = [];
+      allCities.forEach(city => {
+        const input = document.getElementById(`cityAddr_${city.id}`);
+        if (input && input.value.trim()) {
+          addresses.push({ city_id: city.id, venue_address: input.value.trim() });
+        }
+      });
+      
+      try {
+        // Save event template (images are saved in real-time when adding/deleting)
+        const res = await fetch(`/api/generator/event-templates/${eventId}/update`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, description, ticket_image_url: ticketImageUrl })
+        });
+        
+        // Save addresses
+        await fetch(`/api/generator/event-templates/${eventId}/addresses`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ addresses })
+        });
+        
+        if (res.ok) {
+          closeModal();
+          await loadEventTemplates(selectedCategory);
+        } else {
+          alert('Ошибка сохранения');
+        }
+      } catch (err) {
+        console.error('Error saving event:', err);
+        alert('Ошибка соединения');
+      }
+    }
+    
+    async function toggleEvent(eventId, newStatus) {
+      try {
+        await fetch(`/api/generator/event-templates/${eventId}/toggle`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ is_active: newStatus })
+        });
+        await loadEventTemplates(selectedCategory);
+      } catch (err) {
+        console.error('Error toggling event:', err);
+      }
+    }
+    
+    function openLinkEditModal(linkId) {
+      const link = links.find(l => l.id === linkId);
+      if (!link) return;
+      
+      document.getElementById('editLinkId').value = link.id;
+      document.getElementById('editVenueAddress').value = link.venue_address || '';
+      document.getElementById('editSeats').value = link.available_seats || 100;
+      
+      document.getElementById('editLinkModal').classList.add('show');
+    }
+    
+    function closeLinkModal() {
+      document.getElementById('editLinkModal').classList.remove('show');
+    }
+    
+    async function saveLinkChanges() {
+      const linkId = document.getElementById('editLinkId').value;
+      const venueAddress = document.getElementById('editVenueAddress').value;
+      const seats = document.getElementById('editSeats').value;
+      
+      try {
+        const res = await fetch(`/api/generator/links/${linkId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ venue_address: venueAddress, available_seats: parseInt(seats) })
+        });
+        
+        if (res.ok) {
+          closeLinkModal();
+          await loadLinks();
+        } else {
+          alert('Ошибка сохранения');
+        }
+      } catch (err) {
+        console.error('Error saving link:', err);
+        alert('Ошибка соединения');
+      }
+    }
+    
+    async function toggleLink(linkId, newStatus) {
+      try {
+        await fetch(`/api/generator/links/${linkId}/toggle`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ is_active: newStatus })
+        });
+        await loadLinks();
+      } catch (err) {
+        console.error('Error toggling link:', err);
+      }
+    }
+    
+    init();
+  </script>
+
+</body>
+</html>

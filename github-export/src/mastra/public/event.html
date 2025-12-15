@@ -1,0 +1,1506 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <title>Мероприятие - Афиша</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #fff;
+      color: #1a1a1a;
+      line-height: 1.5;
+    }
+    
+    .header {
+      background: #fff;
+      border-bottom: 1px solid #e5e5e5;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .header-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+    
+    .logo-section {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: #e53935;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 20px;
+    }
+    
+    .logo-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+    }
+    
+    .logo-name {
+      font-weight: 600;
+      font-size: 16px;
+      color: #1a1a1a;
+    }
+    
+    .logo-city {
+      font-size: 10px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .header-actions {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    .search-btn {
+      font-size: 20px;
+      cursor: pointer;
+      color: #666;
+    }
+    
+    .login-btn {
+      padding: 8px 16px;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      color: #1a1a1a;
+    }
+    
+    .category-nav {
+      background: #fff;
+      border-bottom: 1px solid #e5e5e5;
+      overflow-x: auto;
+    }
+    
+    .category-nav::-webkit-scrollbar {
+      display: none;
+    }
+    
+    .category-nav-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      gap: 8px;
+      height: 48px;
+      align-items: center;
+    }
+    
+    .category-tab {
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #1a1a1a;
+      background: #f5f5f5;
+      cursor: pointer;
+      white-space: nowrap;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    
+    .category-tab:hover {
+      background: #e8e8e8;
+    }
+    
+    .category-tab.active {
+      background: #1a1a1a;
+      color: #fff;
+    }
+    
+    .category-more {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #f5f5f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      color: #666;
+    }
+    
+    .main-content {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    
+    .hero-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 40px;
+      border-radius: 16px;
+      overflow: hidden;
+      height: 400px;
+    }
+    
+    .hero-main {
+      position: relative;
+      background: #333;
+      overflow: hidden;
+    }
+    
+    .hero-main img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 50%, transparent 100%);
+    }
+    
+    .hero-rating {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      width: 40px;
+      height: 40px;
+      background: #4caf50;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    
+    .hero-content {
+      position: absolute;
+      bottom: 24px;
+      left: 24px;
+      right: 24px;
+      color: white;
+    }
+    
+    .hero-category {
+      font-size: 12px;
+      text-transform: uppercase;
+      opacity: 0.8;
+      margin-bottom: 8px;
+    }
+    
+    .hero-title {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      line-height: 1.2;
+    }
+    
+    .hero-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: #fff;
+      color: #1a1a1a;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .hero-btn:hover {
+      background: #f5f5f5;
+    }
+    
+    .hero-gallery {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 8px;
+    }
+    
+    .hero-gallery-item {
+      background: #eee;
+      overflow: hidden;
+    }
+    
+    .hero-gallery-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .section {
+      margin-bottom: 40px;
+    }
+    
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    
+    .section-title {
+      font-size: 24px;
+      font-weight: 600;
+    }
+    
+    .section-link {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 16px;
+      border: 1px solid #e5e5e5;
+      border-radius: 20px;
+      font-size: 13px;
+      color: #1a1a1a;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    
+    .section-link:hover {
+      background: #f5f5f5;
+    }
+    
+    .sessions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    
+    .session-card {
+      padding: 16px;
+      border: 1px solid #e5e5e5;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    
+    .session-card:hover {
+      border-color: #4caf50;
+      box-shadow: 0 2px 8px rgba(76,175,80,0.15);
+    }
+    
+    .session-price {
+      font-size: 12px;
+      color: #4caf50;
+      margin-bottom: 8px;
+    }
+    
+    .session-time {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    
+    .session-address {
+      font-size: 13px;
+      color: #666;
+    }
+    
+    .full-schedule {
+      margin-top: 32px;
+    }
+    
+    .schedule-row {
+      display: flex;
+      align-items: center;
+      padding: 20px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .schedule-date {
+      width: 100px;
+      flex-shrink: 0;
+    }
+    
+    .schedule-day-num {
+      font-size: 36px;
+      font-weight: 300;
+      line-height: 1;
+    }
+    
+    .schedule-day-num sup {
+      font-size: 14px;
+      vertical-align: super;
+    }
+    
+    .schedule-day-name {
+      font-size: 11px;
+      color: #e53935;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+    
+    .schedule-info {
+      flex: 1;
+      padding: 16px 24px;
+      background: #f9f9f9;
+      border-radius: 8px;
+      margin: 0 24px;
+    }
+    
+    .schedule-time {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .schedule-venue {
+      font-size: 13px;
+      color: #666;
+    }
+    
+    .schedule-price-btn {
+      padding: 12px 24px;
+      background: #1a1a1a;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    
+    .schedule-price-btn:hover {
+      background: #333;
+    }
+    
+    .about-section {
+      margin-bottom: 40px;
+    }
+    
+    .about-label {
+      font-size: 12px;
+      color: #666;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    
+    .about-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+    
+    .about-text {
+      font-size: 15px;
+      color: #333;
+      line-height: 1.7;
+      max-width: 800px;
+    }
+    
+    .age-section {
+      margin-bottom: 40px;
+    }
+    
+    .age-label {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 4px;
+    }
+    
+    .age-value {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .recommendations-section {
+      margin-bottom: 40px;
+    }
+    
+    .recs-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    
+    .recs-scroll {
+      display: flex;
+      gap: 16px;
+      overflow-x: auto;
+      padding-bottom: 16px;
+    }
+    
+    .recs-scroll::-webkit-scrollbar {
+      height: 6px;
+    }
+    
+    .recs-scroll::-webkit-scrollbar-track {
+      background: #f5f5f5;
+      border-radius: 3px;
+    }
+    
+    .recs-scroll::-webkit-scrollbar-thumb {
+      background: #ccc;
+      border-radius: 3px;
+    }
+    
+    .rec-card {
+      flex: 0 0 180px;
+      cursor: pointer;
+    }
+    
+    .rec-card-image {
+      position: relative;
+      width: 180px;
+      height: 240px;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    
+    .rec-card-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .rec-card-rating {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      padding: 4px 10px;
+      background: #4caf50;
+      border-radius: 12px;
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .rec-card-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: #1a1a1a;
+    }
+    
+    .footer {
+      background: #f5f5f5;
+      padding: 40px 0;
+      margin-top: 40px;
+    }
+    
+    .footer-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    
+    .footer-links {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+    
+    .footer-column a {
+      display: block;
+      color: #666;
+      text-decoration: none;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+    
+    .footer-column a:hover {
+      color: #1a1a1a;
+    }
+    
+    .footer-copy {
+      font-size: 12px;
+      color: #999;
+      padding-top: 24px;
+      border-top: 1px solid #e5e5e5;
+    }
+    
+    .order-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .order-modal.active {
+      display: flex;
+    }
+    
+    .order-modal-content {
+      background: #fff;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 480px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    
+    .order-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+    
+    .order-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    
+    .form-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: #666;
+    }
+    
+    .form-input {
+      padding: 12px 16px;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: inherit;
+    }
+    
+    .form-input:focus {
+      outline: none;
+      border-color: #4caf50;
+    }
+    
+    .order-submit {
+      padding: 14px 24px;
+      background: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    
+    .order-submit:hover {
+      background: #43a047;
+    }
+    
+    .order-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .selected-session {
+      padding: 16px;
+      background: #f5f5f5;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .selected-session-time {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .selected-session-price {
+      color: #4caf50;
+      font-size: 14px;
+    }
+    
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 400px;
+      font-size: 16px;
+      color: #666;
+    }
+    
+    @media (max-width: 768px) {
+      .hero-section {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+      
+      .hero-main {
+        height: 300px;
+      }
+      
+      .hero-gallery {
+        display: none;
+      }
+      
+      .hero-title {
+        font-size: 24px;
+      }
+      
+      .sessions-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      
+      .category-nav-inner {
+        padding: 0 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <a href="/" class="logo-section">
+        <div class="logo-icon">a</div>
+        <div class="logo-text">
+          <span class="logo-name">афиша</span>
+          <span class="logo-city" id="cityName"></span>
+        </div>
+      </a>
+      
+      <div class="header-actions">
+      </div>
+    </div>
+  </header>
+
+  <nav class="category-nav">
+    <div class="category-nav-inner" id="categoryNav">
+    </div>
+  </nav>
+
+  <main class="main-content" id="mainContent">
+    <div class="loading" id="loadingState">Загрузка...</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-links">
+        <div class="footer-column">
+          <a href="/#cat-1">Выставки</a>
+          <a href="/#cat-2">Музеи</a>
+          <a href="/#cat-3">Квест комната</a>
+          <a href="/#cat-4">Экстрим</a>
+          <a href="/#cat-5">Daily</a>
+        </div>
+        <div class="footer-column">
+          <a href="/#cat-6">Комната гнева</a>
+          <a href="/#cat-7">Бильярд</a>
+          <a href="/#cat-8">Боулинг</a>
+          <a href="/">На главную</a>
+        </div>
+      </div>
+      <div class="footer-copy">© 1999-2025 ООО «Компания Афиша». Все права защищены. Для лиц старше 18 лет.</div>
+    </div>
+  </footer>
+
+  <div class="order-modal" id="orderModal" onclick="closeOrderModal(event)">
+    <div class="order-modal-content" onclick="event.stopPropagation()">
+      <h2 class="order-title">Оформление заказа</h2>
+      <div class="selected-session" id="selectedSession">
+        <div class="selected-session-time" id="selectedTime">Пятница 17:00</div>
+        <div class="selected-session-price" id="selectedPrice">от 2490 ₽</div>
+      </div>
+      <form class="order-form" id="orderForm" onsubmit="submitOrder(event)">
+        <div class="form-group">
+          <label class="form-label">Имя</label>
+          <input type="text" class="form-input" id="customerName" required placeholder="Введите ваше имя">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="customerEmail" required placeholder="email@example.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Телефон</label>
+          <input type="tel" class="form-input" id="customerPhone" required placeholder="+7 (999) 123-45-67">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Количество билетов</label>
+          <input type="number" class="form-input" id="ticketCount" min="1" max="10" value="1" required>
+        </div>
+        <button type="submit" class="order-submit" id="submitBtn">Оформить заказ</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let eventData = null;
+    let templateId = null; // Template ID for recommendations filtering
+    let events = [];
+    let categories = [];
+    let selectedSessionData = null;
+    let currentCitySlug = '';
+    
+    const categoryTabs = [
+      'ВЫСТАВКИ', 'МУЗЕИ', 'КВЕСТ КОМНАТА', 'ЭКСТРИМ', 
+      'DAILY', 'КОМНАТА ГНЕВА', 'БИЛЬЯРД', 'БОУЛИНГ'
+    ];
+    
+    let isGeneratedLink = false;
+    let isEventTemplate = false;
+    let isNewUrlFormat = false;
+    let linkCode = null;
+    let linkId = null; // For new URL format ?lid= parameter
+    
+    // Transliterate Russian city name to Latin for URL
+    function transliterate(name) {
+      const map = {'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'yo','ж':'zh','з':'z','и':'i','й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f','х':'kh','ц':'ts','ч':'ch','ш':'sh','щ':'sch','ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya',' ':'-'};
+      return name.toLowerCase().split('').map(c => map[c] || c).join('').replace(/--+/g, '-');
+    }
+    
+    function getEventId() {
+      const path = window.location.pathname;
+      const match = path.match(/\/event\/(\d+)/);
+      return match ? parseInt(match[1]) : 1;
+    }
+    
+    function getLinkCode() {
+      const path = window.location.pathname;
+      const match = path.match(/\/e\/([A-Z0-9-]+)/i);
+      return match ? match[1] : null;
+    }
+    
+    function getNewUrlParams() {
+      const path = window.location.pathname;
+      
+      // SIMPLE FORMAT (preferred): /show/templateId/linkId (no city slug!)
+      // This is the cleanest format - linkId uniquely identifies everything
+      const simpleMatch = path.match(/^\/show\/(\d+)\/(\d+)$/i);
+      if (simpleMatch) {
+        return { templateId: simpleMatch[1], lid: simpleMatch[2], simple: true };
+      }
+      
+      // Legacy format: /show/city/id/lid (with city slug)
+      const matchWithLid = path.match(/^\/show\/([a-z-]+)\/(\d+)\/(\d+)/i);
+      if (matchWithLid) {
+        return { citySlug: matchWithLid[1], templateId: matchWithLid[2], lid: matchWithLid[3] };
+      }
+      
+      // Fallback: /show/city/id without lid in path
+      const match = path.match(/^\/show\/([a-z-]+)\/(\d+)/i);
+      if (match) {
+        const urlParams = new URLSearchParams(window.location.search);
+        let lid = urlParams.get('lid');
+        
+        if (!lid) {
+          const decodedPath = decodeURIComponent(path);
+          const encodedMatch = decodedPath.match(/\?lid=(\d+)/);
+          if (encodedMatch) {
+            lid = encodedMatch[1];
+          }
+        }
+        
+        return { citySlug: match[1], templateId: match[2], lid: lid || undefined };
+      }
+      return null;
+    }
+    
+    async function validateLinkAccess() {
+      const accessData = localStorage.getItem('afisha_city_access');
+      if (!accessData) return true; // No stored access, let normal flow handle it
+      
+      try {
+        const access = JSON.parse(accessData);
+        // linkCode is required - old entries without it are invalid
+        if (!access.linkCode) {
+          localStorage.removeItem('afisha_city_access');
+          return false;
+        }
+        
+        const res = await fetch(`/api/links/validate?code=${access.linkCode}`);
+        if (!res.ok) {
+          localStorage.removeItem('afisha_city_access');
+          return false;
+        }
+        const data = await res.json();
+        if (!data.active) {
+          localStorage.removeItem('afisha_city_access');
+          return false;
+        }
+        return true;
+      } catch (e) {
+        localStorage.removeItem('afisha_city_access');
+        return false;
+      }
+    }
+    
+    async function loadData() {
+      linkCode = getLinkCode();
+      isGeneratedLink = !!linkCode;
+      const newUrlParams = getNewUrlParams();
+      isNewUrlFormat = !!newUrlParams;
+      
+      console.log('[EventPage] Loading data:', { 
+        path: window.location.pathname, 
+        linkCode, 
+        isGeneratedLink, 
+        isNewUrlFormat, 
+        newUrlParams 
+      });
+      
+      try {
+        if (isNewUrlFormat) {
+          linkId = newUrlParams.lid || null;
+          
+          console.log('[EventPage] New URL format:', { simple: newUrlParams.simple, lid: linkId });
+          
+          if (linkId) {
+            // ALWAYS use /api/event-by-link for linkId-based lookups
+            // This ensures we get authoritative data from the link, ignoring any URL manipulation
+            const apiUrl = `/api/event-by-link/${linkId}`;
+            console.log('[EventPage] Fetching:', apiUrl);
+            const res = await fetch(apiUrl);
+            console.log('[EventPage] API response status:', res.status);
+            if (res.ok) {
+              const data = await res.json();
+              console.log('[EventPage] API data:', data);
+              if (data && !data.error) {
+                // Validate templateId matches if URL specified one
+                const urlTemplateId = parseInt(newUrlParams.templateId);
+                if (data.templateId && urlTemplateId !== data.templateId) {
+                  console.error('[EventPage] Template mismatch! URL:', urlTemplateId, 'API:', data.templateId);
+                  showUnavailablePage();
+                  return;
+                }
+                
+                isGeneratedLink = true;
+                templateId = data.templateId || urlTemplateId; // Trust API templateId first
+                linkCode = data.linkCode; // Store link code for booking navigation
+                eventData = {
+                  id: data.id,
+                  name: data.name,
+                  description: data.description,
+                  price: 2490,
+                  categoryName: data.categoryName,
+                  cityName: data.cityName,
+                  venue: data.venueAddress || '',
+                  date: data.eventDate,
+                  time: data.eventTime,
+                  availableSeats: data.availableSeats,
+                  images: data.images || [],
+                  coverImageUrl: data.imageUrl || (data.images && data.images[0]),
+                  cityId: data.cityId,
+                  citySlug: data.citySlug
+                };
+                currentCitySlug = data.citySlug || transliterate(data.cityName);
+                
+                // Update localStorage with new valid access
+                if (data.cityName && data.cityId) {
+                  localStorage.setItem('afisha_city_access', JSON.stringify({
+                    cityId: data.cityId,
+                    cityName: data.cityName,
+                    linkCode: data.linkCode || linkId,
+                    accessTime: Date.now()
+                  }));
+                }
+              } else {
+                console.log('[EventPage] API returned error:', data);
+                showUnavailablePage();
+                return;
+              }
+            } else {
+              console.log('[EventPage] API request failed');
+              showUnavailablePage();
+              return;
+            }
+          } else {
+            // No lid - check if user has localStorage access (came from valid link before)
+            const accessData = localStorage.getItem('afisha_city_access');
+            if (!accessData) {
+              showUnavailablePage();
+              return;
+            }
+            
+            let storedCity = '';
+            let storedCityId = null;
+            try {
+              const access = JSON.parse(accessData);
+              storedCity = access.cityName || '';
+              storedCityId = access.cityId || null;
+            } catch (e) {}
+            
+            if (!storedCity || !storedCityId) {
+              showUnavailablePage();
+              return;
+            }
+            
+            // Load template for full access (user can view AND book)
+            const templateRes = await fetch(`/api/generator/event-templates/${newUrlParams.templateId}`);
+            if (templateRes.ok) {
+              const templateData = await templateRes.json();
+              const tpl = templateData.template || templateData;
+              if (tpl && !templateData.error && tpl.isActive !== false) {
+                isEventTemplate = true;
+                templateId = tpl.id; // Store for recommendations filtering
+                eventData = {
+                  id: tpl.id,
+                  name: tpl.name,
+                  description: tpl.description,
+                  price: 2490,
+                  categoryName: tpl.categoryName,
+                  cityName: storedCity,
+                  cityId: storedCityId,
+                  venue: '',
+                  date: new Date().toISOString(),
+                  time: '12:00',
+                  availableSeats: 50,
+                  images: tpl.images || [],
+                  coverImageUrl: tpl.image_url || (tpl.images && tpl.images[0])
+                };
+                currentCitySlug = transliterate(storedCity);
+              } else {
+                showUnavailablePage();
+                return;
+              }
+            } else {
+              showUnavailablePage();
+              return;
+            }
+          }
+        } else if (isGeneratedLink) {
+          // Load from generated link
+          console.log('[EventPage] Fetching generated link:', linkCode);
+          const linkRes = await fetch(`/api/event-link/${linkCode}`);
+          console.log('[EventPage] Link API response status:', linkRes.status);
+          if (linkRes.ok) {
+            const linkData = await linkRes.json();
+            console.log('[EventPage] Link data:', linkData);
+            if (linkData && !linkData.error) {
+              templateId = linkData.templateId; // Store for recommendations filtering
+              eventData = {
+                id: linkData.id,
+                name: linkData.name,
+                description: linkData.description,
+                price: 2490,
+                categoryName: linkData.categoryName,
+                cityName: linkData.cityName,
+                venue: linkData.venueAddress || '',
+                date: linkData.eventDate,
+                time: linkData.eventTime,
+                availableSeats: linkData.availableSeats,
+                images: linkData.images || [],
+                coverImageUrl: linkData.imageUrl || (linkData.images && linkData.images[0]),
+                linkCode: linkData.linkCode,
+                cityId: linkData.cityId
+              };
+              currentCitySlug = transliterate(linkData.cityName);
+              
+              // Store city access in localStorage for access control
+              if (linkData.cityName && linkData.cityId) {
+                localStorage.setItem('afisha_city_access', JSON.stringify({
+                  cityId: linkData.cityId,
+                  cityName: linkData.cityName,
+                  linkCode: linkData.linkCode || linkCode,
+                  accessTime: Date.now()
+                }));
+              }
+            } else {
+              console.error('[EventPage] Link data has error:', linkData);
+              showUnavailablePage();
+              return;
+            }
+          } else {
+            console.error('[EventPage] Link API failed with status:', linkRes.status);
+            showUnavailablePage();
+            return;
+          }
+        } else {
+          // Regular event loading from template
+          const eventId = getEventId();
+          
+          // Get city from localStorage
+          const accessData = localStorage.getItem('afisha_city_access');
+          let storedCity = '';
+          let storedCityId = null;
+          if (accessData) {
+            try {
+              const access = JSON.parse(accessData);
+              storedCity = access.cityName || '';
+              storedCityId = access.cityId || null;
+            } catch (e) {}
+          }
+          
+          // If no city access, show 404
+          if (!storedCity || !storedCityId) {
+            showUnavailablePage();
+            return;
+          }
+          
+          const templateRes = await fetch(`/api/generator/event-templates/${eventId}`);
+          
+          if (templateRes.ok) {
+            const templateData = await templateRes.json();
+            const tpl = templateData.template || templateData; // Extract from wrapper
+            if (tpl && !templateData.error) {
+              isEventTemplate = true;
+              templateId = tpl.id; // Store for recommendations filtering
+              eventData = {
+                id: tpl.id,
+                name: tpl.name,
+                description: tpl.description,
+                price: 2490,
+                categoryName: tpl.categoryName,
+                cityName: storedCity,
+                cityId: storedCityId,
+                venue: '',
+                date: new Date().toISOString(),
+                availableSeats: 50,
+                images: tpl.images || [],
+                coverImageUrl: tpl.image_url || (tpl.images && tpl.images[0])
+              };
+              currentCitySlug = transliterate(storedCity);
+            }
+          }
+          
+          if (!eventData) {
+            eventData = getDemoEvent();
+          }
+        }
+      } catch (err) {
+        console.error('Error loading data:', err);
+        eventData = getDemoEvent();
+      }
+      
+      // Load recommendations from actual templates
+      await loadRecommendations();
+      
+      renderPage();
+    }
+    
+    function showUnavailablePage() {
+      document.body.innerHTML = `
+        <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #f5f5f5; font-family: Inter, sans-serif;">
+          <div style="text-align: center; padding: 40px;">
+            <div style="font-size: 120px; color: #ddd; font-weight: 700; line-height: 1;">404</div>
+            <h1 style="font-size: 24px; color: #1a1a1a; margin-bottom: 12px; margin-top: 20px;">Страница не найдена</h1>
+            <p style="color: #666; font-size: 15px; line-height: 1.5;">Запрашиваемая страница не существует или была удалена.</p>
+          </div>
+        </div>
+      `;
+    }
+    
+    function getDemoEvent() {
+      // Get city from localStorage if available
+      const accessData = localStorage.getItem('afisha_city_access');
+      let storedCity = '';
+      if (accessData) {
+        try {
+          const access = JSON.parse(accessData);
+          storedCity = access.cityName || '';
+        } catch (e) {}
+      }
+      
+      return {
+        id: 1,
+        name: 'Профессиональный Тир',
+        description: 'Добро пожаловать в тир, где атмосфера наполнена ароматом пороха, а удовлетворение от меткости — в центре внимания. Ощутите мощь и контроль, держа в руках реальное оружие, исследуя точность и мастерство стрельбы. Это мероприятие предоставляет уникальную возможность испытать волнение от выстрела, соблюдая все правила безопасности. Тир — это не только тренировка навыков стрельбы, но и встреча с энергией, которую приносит в себе каждый выстрел. Готовьтесь к захватывающему опыту, где меткость и концентрация приводят к непередаваемому удовлетворению.',
+        price: 2490,
+        categoryName: 'ЭКСТРИМ',
+        cityName: storedCity,
+        venue: '',
+        date: new Date().toISOString(),
+        availableSeats: 50,
+        images: []
+      };
+    }
+    
+    async function loadRecommendations() {
+      try {
+        const res = await fetch('/api/generator/event-templates');
+        if (res.ok) {
+          const data = await res.json();
+          const templates = data.templates || [];
+          // Filter out current event using templateId (for generated links) or eventData.id (for templates)
+          const currentTemplateId = templateId || eventData?.id;
+          events = templates.filter(t => t.id !== currentTemplateId && t.is_active !== false).slice(0, 10);
+        }
+      } catch (e) {
+        console.error('Error loading recommendations:', e);
+      }
+    }
+    
+    function getDemoRecommendations() {
+      // Return demo recommendations when API fails or returns empty
+      return [
+        { id: 1, name: 'Профессиональный Тир' },
+        { id: 2, name: 'Квест Комната' },
+        { id: 3, name: 'Комната Гнева' },
+        { id: 4, name: 'Мастер-класс по живописи' },
+        { id: 5, name: 'Пейнтбол' },
+        { id: 6, name: 'Картинг' }
+      ];
+    }
+    
+    function renderPage() {
+      renderCategoryNav();
+      renderMainContent();
+      document.title = `${eventData.name} - Афиша`;
+    }
+    
+    function renderCategoryNav() {
+      const nav = document.getElementById('categoryNav');
+      const categoryIds = {
+        'ВЫСТАВКИ': 1,
+        'МУЗЕИ': 2,
+        'КВЕСТ КОМНАТА': 3,
+        'ЭКСТРИМ': 4,
+        'DAILY': 5,
+        'КОМНАТА ГНЕВА': 6,
+        'БИЛЬЯРД': 7,
+        'БОУЛИНГ': 8
+      };
+      nav.innerHTML = categoryTabs.map((tab, i) => {
+        const catId = categoryIds[tab] || (i + 1);
+        return `<a href="/#cat-${catId}" class="category-tab ${eventData.categoryName?.toUpperCase() === tab ? 'active' : ''}" onclick="goToCategory(${catId}, event)">${tab}</a>`;
+      }).join('');
+    }
+    
+    function goToCategory(categoryId, event) {
+      event.preventDefault();
+      // Navigate to main page with category filter
+      window.location.href = '/#cat-' + categoryId;
+    }
+    
+    function renderMainContent() {
+      const main = document.getElementById('mainContent');
+      const rating = (7.5 + Math.random() * 2).toFixed(1);
+      const price = 2490;
+      const venue = eventData.venue || '';
+      const city = eventData.cityName || '';
+      const heroImage = eventData.coverImageUrl || null;
+      
+      let sessions = [];
+      const dayNames = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+      const monthNames = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+      
+      // Format time as HH:MM (remove seconds if present)
+      function formatTimeHHMM(timeStr) {
+        if (!timeStr) return '12:00';
+        const parts = timeStr.split(':');
+        return `${parts[0]}:${parts[1]}`;
+      }
+      
+      if (isGeneratedLink && eventData.date && eventData.time) {
+        const eventDate = new Date(eventData.date);
+        const dayName = dayNames[eventDate.getDay()];
+        const dateStr = `${eventDate.getDate()} ${monthNames[eventDate.getMonth()]}`;
+        const formattedTime = formatTimeHHMM(eventData.time);
+        const isoDate = eventDate.toISOString().split('T')[0];
+        
+        // Main session from generated link (with stable ticket count)
+        sessions.push({ 
+          day: `${dayName}, ${dateStr}`, 
+          time: formattedTime, 
+          isMain: true,
+          seats: eventData.availableSeats || 50,
+          isoDate: isoDate
+        });
+        
+        // Generate additional auto sessions (random tickets 1-16)
+        const autoTimes = ['11:00', '14:00', '17:00', '19:00'];
+        const nextDay = new Date(eventDate);
+        nextDay.setDate(nextDay.getDate() + 1);
+        
+        autoTimes.forEach(t => {
+          if (t !== formattedTime) {
+            const nextDayIso = nextDay.toISOString().split('T')[0];
+            sessions.push({
+              day: `${dayNames[nextDay.getDay()]}, ${nextDay.getDate()} ${monthNames[nextDay.getMonth()]}`,
+              time: t,
+              isMain: false,
+              seats: Math.floor(Math.random() * 16) + 1, // Random 1-16
+              isoDate: nextDayIso
+            });
+          }
+        });
+      } else {
+        // Default sessions for non-generated events (random tickets 1-16)
+        const today = new Date();
+        for (let i = 0; i < 4; i++) {
+          const d = new Date(today);
+          d.setDate(d.getDate() + i);
+          const isoDate = d.toISOString().split('T')[0];
+          sessions.push({
+            day: `${dayNames[d.getDay()]}, ${d.getDate()} ${monthNames[d.getMonth()]}`,
+            time: ['11:00', '14:00', '17:00', '19:00'][i % 4],
+            isMain: false,
+            seats: Math.floor(Math.random() * 16) + 1, // Random 1-16
+            isoDate: isoDate
+          });
+        }
+      }
+      
+      const recs = events.filter(e => e.id !== eventData.id).slice(0, 6);
+      const recommendations = recs.length > 0 ? recs : getDemoRecommendations();
+      
+      main.innerHTML = `
+        <section class="hero-section">
+          <div class="hero-main" ${!heroImage ? 'style="background: linear-gradient(135deg, #333 0%, #555 100%);"' : ''}>
+            ${heroImage ? `<img src="${heroImage}" alt="${eventData.name}">` : ''}
+            <div class="hero-overlay"></div>
+            <div class="hero-rating">${rating}</div>
+            <div class="hero-content">
+              <div class="hero-category">${(eventData.categoryName?.toUpperCase() || 'СОБЫТИЕ')} В ГОРОДЕ ${city.toUpperCase()}</div>
+              <h1 class="hero-title">${eventData.name}</h1>
+              <button class="hero-btn" onclick="scrollToSessions()">Расписание и карты</button>
+            </div>
+          </div>
+          ${(eventData.images && eventData.images.length > 1) ? `
+          <div class="hero-gallery">
+            ${eventData.images.slice(1, 5).map(img => `
+              <div class="hero-gallery-item">
+                <img src="${img}" alt="">
+              </div>
+            `).join('')}
+          </div>` : ''}
+        </section>
+
+        <section class="section" id="sessionsSection">
+          <div class="section-header">
+            <h2 class="section-title">Расписание сеансов</h2>
+            <a href="#" class="section-link" onclick="toggleFullSchedule(event)">Полное расписание →</a>
+          </div>
+          <div class="sessions-grid" id="sessionsGrid">
+            ${sessions.map((s, i) => `
+              <div class="session-card ${s.isMain ? 'main-session' : ''}" onclick="goToBooking('${s.isoDate}', '${s.time}', ${s.seats})">
+                <div class="session-price">От ${formatPrice(price)} ₽</div>
+                <div class="session-time">${s.day} ${s.time}</div>
+                <div class="session-address">${city}${venue ? ', ' + venue : ''}</div>
+                <div class="session-seats" style="font-size: 12px; color: #e53935; margin-top: 4px;">Осталось ${s.seats} мест</div>
+              </div>
+            `).join('')}
+          </div>
+          <div class="full-schedule" id="fullSchedule" style="display: none;">
+            ${generateFullSchedule(price, city, venue)}
+          </div>
+        </section>
+
+        <section class="about-section">
+          <div class="about-label">Описание организатора</div>
+          <h2 class="about-title">О ${eventData.name}</h2>
+          <p class="about-text">${eventData.description || 'Описание мероприятия появится здесь. Это увлекательное событие, которое подарит вам незабываемые впечатления и эмоции.'}</p>
+        </section>
+
+        <section class="age-section">
+          <div class="age-label">Возраст</div>
+          <div class="age-value">18+</div>
+        </section>
+
+        <section class="recommendations-section">
+          <h2 class="recs-title">Рекомендации для вас</h2>
+          <div class="recs-scroll">
+            ${recommendations.map((r, i) => {
+              const recRating = (8 + Math.random() * 1.5).toFixed(1);
+              const recImage = r.image_url || r.imageUrl || r.coverImageUrl;
+              return `
+                <div class="rec-card" onclick="openEvent(${r.id})">
+                  <div class="rec-card-image" style="${recImage ? '' : 'background: linear-gradient(135deg, #333 0%, #555 100%);'}">
+                    ${recImage ? `<img src="${recImage}" alt="${r.name}">` : ''}
+                    <div class="rec-card-rating">${recRating}</div>
+                  </div>
+                  <div class="rec-card-title">${r.name}</div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </section>
+      `;
+      
+      document.getElementById('cityName').textContent = city.toUpperCase();
+    }
+    
+    function formatPrice(price) {
+      return price?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') || '0';
+    }
+    
+    function scrollToSessions() {
+      document.getElementById('sessionsSection').scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    function selectSession(time, price) {
+      selectedSessionData = { time, price };
+      document.getElementById('selectedTime').textContent = time;
+      document.getElementById('selectedPrice').textContent = `от ${formatPrice(price)} ₽`;
+      document.getElementById('orderModal').classList.add('active');
+    }
+    
+    function closeOrderModal(e) {
+      if (e.target === document.getElementById('orderModal')) {
+        document.getElementById('orderModal').classList.remove('active');
+      }
+    }
+    
+    async function submitOrder(e) {
+      e.preventDefault();
+      
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Оформление...';
+      
+      const orderData = {
+        eventId: eventData.id,
+        eventName: eventData.name,
+        customerName: document.getElementById('customerName').value,
+        customerEmail: document.getElementById('customerEmail').value,
+        customerPhone: document.getElementById('customerPhone').value,
+        seatsCount: parseInt(document.getElementById('ticketCount').value),
+        sessionTime: selectedSessionData?.time,
+        price: selectedSessionData?.price
+      };
+      
+      try {
+        const res = await fetch('/api/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(orderData)
+        });
+        
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.message || 'Ошибка сервера. Попробуйте позже.');
+        }
+        
+        const result = await res.json();
+        
+        if (result.success && result.orderCode) {
+          window.location.href = '/payment?order=' + result.orderCode;
+        } else if (result.success) {
+          alert('Заказ успешно оформлен! Мы свяжемся с вами для подтверждения.');
+          document.getElementById('orderModal').classList.remove('active');
+          document.getElementById('orderForm').reset();
+        } else {
+          throw new Error(result.message || 'Ошибка оформления заказа');
+        }
+      } catch (err) {
+        alert(err.message || 'Произошла ошибка. Попробуйте ещё раз.');
+      }
+      
+      btn.disabled = false;
+      btn.textContent = 'Оформить заказ';
+    }
+    
+    function openEvent(id) {
+      // Use new URL format with city slug
+      const slug = currentCitySlug || transliterate(eventData?.cityName || 'moskva');
+      window.location.href = `/show/${slug}/${id}?r=${Date.now()}`;
+    }
+    
+    function generateFullSchedule(price, city, venue) {
+      const today = new Date();
+      const scheduleData = [];
+      const dayNames = ['ВОСКРЕСЕНЬЕ', 'ПОНЕДЕЛЬНИК', 'ВТОРНИК', 'СРЕДА', 'ЧЕТВЕРГ', 'ПЯТНИЦА', 'СУББОТА'];
+      const monthAbbr = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
+      
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(today);
+        date.setDate(today.getDate() + i);
+        const dayNum = date.getDate();
+        const dayName = dayNames[date.getDay()];
+        const isoDate = date.toISOString().split('T')[0];
+        const times = date.getDay() === 0 || date.getDay() === 6 
+          ? ['11:00', '14:00', '17:00'] 
+          : ['17:00'];
+        
+        times.forEach(time => {
+          scheduleData.push({ dayNum, dayName, time, month: monthAbbr[date.getMonth()], isoDate, seats: Math.floor(Math.random() * 16) + 1 });
+        });
+      }
+      
+      return scheduleData.map(s => `
+        <div class="schedule-row">
+          <div class="schedule-date">
+            <div class="schedule-day-num">${s.dayNum}<sup>${s.month}</sup></div>
+            <div class="schedule-day-name">${s.dayName}</div>
+          </div>
+          <div class="schedule-info">
+            <div class="schedule-time">${s.time}</div>
+            <div class="schedule-venue">${city}${venue ? ', ' + venue : ','}</div>
+          </div>
+          <button class="schedule-price-btn" onclick="goToBooking('${s.isoDate}', '${s.time}', ${s.seats || 20})">От ${formatPrice(price)} ₽</button>
+        </div>
+      `).join('');
+    }
+    
+    function toggleFullSchedule(e) {
+      e.preventDefault();
+      const fullSchedule = document.getElementById('fullSchedule');
+      const sessionsGrid = document.getElementById('sessionsGrid');
+      const link = e.target;
+      
+      if (fullSchedule.style.display === 'none') {
+        fullSchedule.style.display = 'block';
+        sessionsGrid.style.display = 'none';
+        link.textContent = 'Свернуть ←';
+      } else {
+        fullSchedule.style.display = 'none';
+        sessionsGrid.style.display = 'grid';
+        link.textContent = 'Полное расписание →';
+      }
+    }
+    
+    function goToBooking(day, time, seats) {
+      const seatsParam = seats ? `&seats=${seats}` : '';
+      // Use linkCode from: global var (URL path) → eventData → localStorage
+      const effectiveLinkCode = linkCode || eventData?.linkCode || (() => {
+        try {
+          const access = JSON.parse(localStorage.getItem('afisha_city_access') || '{}');
+          return access.linkCode || null;
+        } catch (e) { return null; }
+      })();
+      
+      // Only use generated link booking if we have a valid link code AND this is a generated link context
+      if (isGeneratedLink && effectiveLinkCode) {
+        window.location.href = `/booking-link/${effectiveLinkCode}?date=${day}&time=${encodeURIComponent(time)}${seatsParam}`;
+      } else {
+        // Template booking - use the template ID
+        const bookingId = templateId || eventData?.id;
+        window.location.href = `/booking/${bookingId}?date=${day}&time=${encodeURIComponent(time)}&template=1${seatsParam}`;
+      }
+    }
+    
+    loadData();
+  </script>
+<script src="//code.tidio.co/ufjldpy2fgwbem1lrdwd8yqubddfk15k.js" async></script>
+</body>
+</html>

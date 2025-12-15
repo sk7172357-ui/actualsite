@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <title>Вход в админ-панель - Афиша</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-container {
+      background: #fff;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      width: 100%;
+      max-width: 400px;
+    }
+    .login-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .login-subtitle {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 32px;
+      text-align: center;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+      margin-bottom: 8px;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus {
+      border-color: #e31837;
+    }
+    .login-btn {
+      width: 100%;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      background: #e31837;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .login-btn:hover {
+      background: #c41430;
+    }
+    .login-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .error-message {
+      background: #fee;
+      color: #c00;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      display: none;
+    }
+    .error-message.show {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <h1 class="login-title">Админ-панель</h1>
+    <p class="login-subtitle">Введите пароль для входа</p>
+    
+    <div id="errorMessage" class="error-message"></div>
+    
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="password">Пароль</label>
+        <input type="password" id="password" name="password" placeholder="Введите пароль" required>
+      </div>
+      <button type="submit" class="login-btn" id="loginBtn">Войти</button>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById('loginForm');
+    const passwordInput = document.getElementById('password');
+    const loginBtn = document.getElementById('loginBtn');
+    const errorMessage = document.getElementById('errorMessage');
+
+    // Check if already logged in
+    const existingToken = localStorage.getItem('adminToken');
+    if (existingToken) {
+      // Validate token
+      fetch('/api/admin/validate-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + existingToken
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.valid) {
+          // Redirect to target or default admin page
+          const target = new URLSearchParams(window.location.search).get('redirect') || '/admin-events';
+          window.location.href = target;
+        }
+      })
+      .catch(() => {
+        localStorage.removeItem('adminToken');
+      });
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const password = passwordInput.value.trim();
+      if (!password) {
+        showError('Введите пароль');
+        return;
+      }
+
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Проверка...';
+      errorMessage.classList.remove('show');
+
+      try {
+        const response = await fetch('/api/admin/verify-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.token) {
+          localStorage.setItem('adminToken', data.token);
+          const target = new URLSearchParams(window.location.search).get('redirect') || '/admin-events';
+          window.location.href = target;
+        } else {
+          showError(data.message || 'Неверный пароль');
+          loginBtn.disabled = false;
+          loginBtn.textContent = 'Войти';
+        }
+      } catch (error) {
+        showError('Ошибка соединения с сервером');
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Войти';
+      }
+    });
+
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.classList.add('show');
+    }
+  </script>
+  
+</body>
+</html>

