@@ -225,12 +225,25 @@
     <div class="cards-grid" id="eventsGrid"></div>
     
     <div class="links-section">
-      <h3>Сгенерированные ссылки</h3>
-      <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-        <button class="event-btn" style="background: #ffebee; color: #f44336; flex: none; padding: 10px 20px;" onclick="deleteAllLinks()">Удалить все ссылки</button>
-        <span style="color: #666; font-size: 13px; align-self: center;" id="linksCount"></span>
+      <h3>Все сгенерированные ссылки</h3>
+      <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+        <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center;">
+          <input type="text" id="linksSearchInput" placeholder="Поиск по названию, городу или коду..." 
+                 oninput="filterLinks()" 
+                 style="flex: 1; min-width: 200px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;">
+          <select id="linksStatusFilter" onchange="filterLinks()" style="padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; cursor: pointer;">
+            <option value="all">Все статусы</option>
+            <option value="active">Только активные</option>
+            <option value="inactive">Только отключённые</option>
+          </select>
+          <button class="event-btn" style="background: #ffebee; color: #f44336; padding: 10px 20px;" onclick="deleteAllLinks()">Удалить все</button>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <span style="color: #666; font-size: 13px;" id="linksCount"></span>
+          <span style="color: #666; font-size: 13px;" id="filteredCount"></span>
+        </div>
+        <div id="linksContainer" style="max-height: 500px; overflow-y: auto;"></div>
       </div>
-      <div id="linksContainer"></div>
     </div>
     
     <div class="links-section" style="margin-top: 40px;">
@@ -784,32 +797,94 @@
       `).join('');
     }
     
-    function renderLinks() {
+    function filterLinks() {
+      const searchTerm = document.getElementById('linksSearchInput').value.toLowerCase().trim();
+      const statusFilter = document.getElementById('linksStatusFilter').value;
+      
+      let filtered = links;
+      
+      // Filter by search term
+      if (searchTerm) {
+        filtered = filtered.filter(link => 
+          (link.event_name || '').toLowerCase().includes(searchTerm) ||
+          (link.city_name || '').toLowerCase().includes(searchTerm) ||
+          (link.link_code || '').toLowerCase().includes(searchTerm) ||
+          String(link.id).includes(searchTerm)
+        );
+      }
+      
+      // Filter by status
+      if (statusFilter === 'active') {
+        filtered = filtered.filter(link => link.is_active);
+      } else if (statusFilter === 'inactive') {
+        filtered = filtered.filter(link => !link.is_active);
+      }
+      
+      renderFilteredLinks(filtered);
+    }
+    
+    function renderFilteredLinks(filteredLinks) {
       const container = document.getElementById('linksContainer');
       const countEl = document.getElementById('linksCount');
+      const filteredCountEl = document.getElementById('filteredCount');
+      
       countEl.textContent = links.length > 0 ? 'Всего: ' + links.length + ' ссылок' : '';
       
-      if (links.length === 0) {
-        container.innerHTML = '<p style="color:#999;text-align:center;padding:20px;">Нет сгенерированных ссылок</p>';
+      if (filteredLinks.length !== links.length) {
+        filteredCountEl.textContent = 'Показано: ' + filteredLinks.length;
+      } else {
+        filteredCountEl.textContent = '';
+      }
+      
+      if (filteredLinks.length === 0) {
+        container.innerHTML = '<p style="color:#999;text-align:center;padding:20px;">Ничего не найдено</p>';
         return;
       }
       
-      container.innerHTML = links.map(link => `
-        <div class="link-card">
-          <div class="link-info">
+      container.innerHTML = filteredLinks.map(link => {
+        const fullUrl = `/show/${transliterate(link.city_name || 'unknown')}/${link.event_template_id || 0}/${link.id}`;
+        return `
+        <div class="link-card" style="border-left: 4px solid ${link.is_active ? '#4CAF50' : '#f44336'};">
+          <div class="link-info" style="flex: 1;">
             <strong>${link.event_name}</strong>
-            <span>${link.city_name} - ${formatDate(link.event_date)} ${formatTime(link.event_time)} | ${link.link_code}</span>
+            <span>${link.city_name} - ${formatDate(link.event_date)} ${formatTime(link.event_time)}</span>
+            <div style="font-size: 11px; color: #999; margin-top: 3px;">ID: ${link.id} | ${link.link_code || ''}</div>
           </div>
-          <div class="link-actions" style="display: flex; gap: 8px;">
-            <button class="event-btn btn-edit" onclick="openLinkEditModal(${link.id})">Адрес</button>
+          <div class="link-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="event-btn" style="background: #e3f2fd; color: #1976d2; font-size: 12px;" onclick="copyLinkUrl('${fullUrl}')">Копировать</button>
+            <button class="event-btn btn-edit" style="font-size: 12px;" onclick="openLinkEditModal(${link.id})">Адрес</button>
             <button class="event-btn btn-toggle ${link.is_active ? 'active' : ''}" 
+                    style="font-size: 12px;"
                     onclick="toggleLink(${link.id}, ${!link.is_active})">
               ${link.is_active ? 'Активна' : 'Выкл'}
             </button>
-            <button class="event-btn" style="background: #ffebee; color: #f44336;" onclick="deleteLink(${link.id}, '${link.link_code}')">Удалить</button>
+            <button class="event-btn" style="background: #ffebee; color: #f44336; font-size: 12px;" onclick="deleteLink(${link.id}, '${link.link_code}')">Удалить</button>
           </div>
         </div>
-      `).join('');
+      `}).join('');
+    }
+    
+    function copyLinkUrl(path) {
+      const url = window.location.origin + path;
+      navigator.clipboard.writeText(url);
+      alert('Ссылка скопирована!');
+    }
+    
+    function transliterate(text) {
+      if (!text) return '';
+      const map = {
+        'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo',
+        'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
+        'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+        'ф': 'f', 'х': 'kh', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'shch',
+        'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
+        ' ': '-', '-': '-'
+      };
+      return text.toLowerCase().split('').map(c => map[c] || c).join('').replace(/[^a-z0-9-]/g, '');
+    }
+    
+    function renderLinks() {
+      filterLinks();
     }
     
     async function deleteLink(linkId, linkCode) {
