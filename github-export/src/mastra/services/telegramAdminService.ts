@@ -1,10 +1,15 @@
 import TelegramBot from "node-telegram-bot-api";
 
+<<<<<<< HEAD
 // Telegram Bot Configuration - uses environment variables
 // TELEGRAM_BOT_TOKEN - токен бота от @BotFather
 // TELEGRAM_ADMIN_CHAT_ID - ID администратора для личных сообщений (можно узнать через @userinfobot)
 // TELEGRAM_GROUP_ID - (опционально) ID группы для групповых уведомлений
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_GROUP_BOT_TOKEN;
+=======
+// New bot configuration (primary - used for all messages)
+const BOT_TOKEN = process.env.TELEGRAM_GROUP_BOT_TOKEN;
+>>>>>>> a8e1405ee7bb2f8d8a246d291524010215e9dedc
 const ADMIN_CHAT_ID = process.env.TELEGRAM_ADMIN_CHAT_ID;
 const GROUP_ID = process.env.TELEGRAM_GROUP_ID;
 
@@ -13,7 +18,11 @@ let webhookInitialized = false;
 
 export function getBot(): TelegramBot | null {
   if (!BOT_TOKEN) {
+<<<<<<< HEAD
     console.error("❌ [TelegramAdmin] TELEGRAM_BOT_TOKEN not configured");
+=======
+    console.error("❌ [TelegramAdmin] TELEGRAM_GROUP_BOT_TOKEN not configured");
+>>>>>>> a8e1405ee7bb2f8d8a246d291524010215e9dedc
     return null;
   }
   if (!bot) {
@@ -101,10 +110,15 @@ export async function sendChannelNotification(
     return false;
   }
 
+<<<<<<< HEAD
   // If no GROUP_ID, send to admin directly instead
   const targetChatId = GROUP_ID || ADMIN_CHAT_ID;
   if (!targetChatId) {
     console.warn("⚠️ [TelegramAdmin] No TELEGRAM_GROUP_ID or TELEGRAM_ADMIN_CHAT_ID configured");
+=======
+  if (!GROUP_ID) {
+    console.warn("⚠️ [TelegramAdmin] TELEGRAM_GROUP_ID not configured");
+>>>>>>> a8e1405ee7bb2f8d8a246d291524010215e9dedc
     return false;
   }
 
@@ -118,7 +132,11 @@ export async function sendChannelNotification(
 ${order.cityName} | ${order.eventName} | ${order.eventDate} ${order.eventTime ? order.eventTime.substring(0, 5) : ''}`;
 
   try {
+<<<<<<< HEAD
     await telegramBot.sendMessage(targetChatId, message);
+=======
+    await telegramBot.sendMessage(GROUP_ID, message);
+>>>>>>> a8e1405ee7bb2f8d8a246d291524010215e9dedc
     console.log("✅ [TelegramAdmin] Channel notification sent");
     return true;
   } catch (error) {
@@ -136,9 +154,14 @@ export async function sendChannelPaymentPending(
     return false;
   }
 
+<<<<<<< HEAD
   const targetChatId = GROUP_ID || ADMIN_CHAT_ID;
   if (!targetChatId) {
     console.warn("⚠️ [TelegramAdmin] No chat ID configured");
+=======
+  if (!GROUP_ID) {
+    console.warn("⚠️ [TelegramAdmin] TELEGRAM_GROUP_ID not configured");
+>>>>>>> a8e1405ee7bb2f8d8a246d291524010215e9dedc
     return false;
   }
 
@@ -150,7 +173,11 @@ export async function sendChannelPaymentPending(
 ${order.cityName} | ${order.eventName} | ${order.eventDate} ${order.eventTime ? order.eventTime.substring(0, 5) : ''}`;
 
   try {
+<<<<<<< HEAD
     await telegramBot.sendMessage(targetChatId, message);
+=======
+    await telegramBot.sendMessage(GROUP_ID, message);
+>>>>>>> a8e1405ee7bb2f8d8a246d291524010215e9dedc
     console.log("✅ [TelegramAdmin] Channel payment pending notification sent");
     return true;
   } catch (error) {
@@ -168,9 +195,14 @@ export async function sendChannelPaymentConfirmed(
     return false;
   }
 
+<<<<<<< HEAD
   const targetChatId = GROUP_ID || ADMIN_CHAT_ID;
   if (!targetChatId) {
     console.warn("⚠️ [TelegramAdmin] No chat ID configured");
+=======
+  if (!GROUP_ID) {
+    console.warn("⚠️ [TelegramAdmin] TELEGRAM_GROUP_ID not configured");
+>>>>>>> a8e1405ee7bb2f8d8a246d291524010215e9dedc
     return false;
   }
 
@@ -182,7 +214,11 @@ export async function sendChannelPaymentConfirmed(
 ${order.cityName} | ${order.eventName} | ${order.eventDate} ${order.eventTime ? order.eventTime.substring(0, 5) : ''}`;
 
   try {
+<<<<<<< HEAD
     await telegramBot.sendMessage(targetChatId, message);
+=======
+    await telegramBot.sendMessage(GROUP_ID, message);
+>>>>>>> a8e1405ee7bb2f8d8a246d291524010215e9dedc
     console.log("✅ [TelegramAdmin] Channel payment confirmed notification sent");
     return true;
   } catch (error) {
@@ -200,9 +236,14 @@ export async function sendChannelPaymentRejected(
     return false;
   }
 
+<<<<<<< HEAD
   const targetChatId = GROUP_ID || ADMIN_CHAT_ID;
   if (!targetChatId) {
     console.warn("⚠️ [TelegramAdmin] No chat ID configured");
+=======
+  if (!GROUP_ID) {
+    console.warn("⚠️ [TelegramAdmin] TELEGRAM_GROUP_ID not configured");
+>>>>>>> a8e1405ee7bb2f8d8a246d291524010215e9dedc
     return false;
   }
 
@@ -215,7 +256,11 @@ export async function sendChannelPaymentRejected(
 ${order.cityName} | ${order.eventName} | ${order.eventDate} ${order.eventTime ? order.eventTime.substring(0, 5) : ''}`;
 
   try {
+<<<<<<< HEAD
     await telegramBot.sendMessage(targetChatId, message);
+=======
+    await telegramBot.sendMessage(GROUP_ID, message);
+>>>>>>> a8e1405ee7bb2f8d8a246d291524010215e9dedc
     console.log("✅ [TelegramAdmin] Channel payment rejected notification sent");
     return true;
   } catch (error) {

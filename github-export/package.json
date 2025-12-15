@@ -5,10 +5,15 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "mastra dev",
+<<<<<<< HEAD
     "build": "bash scripts/build.sh",
     "build:mastra": "mastra build",
     "start": "mastra start",
     "postbuild": "cp -r src/mastra/public public 2>/dev/null || true",
+=======
+    "build": "mastra build",
+    "start": "mastra start",
+>>>>>>> a8e1405ee7bb2f8d8a246d291524010215e9dedc
     "check": "tsc",
     "check:format": "prettier --check '**/*.ts'",
     "format": "prettier --write '**/*.ts'"

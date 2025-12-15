@@ -3,6 +3,7 @@
 set -e
 
 export NODE_OPTIONS='--max-old-space-size=1536'
+<<<<<<< HEAD
 
 echo "Building Mastra..."
 mastra build
@@ -21,3 +22,6 @@ cp -r src/mastra/public/* public/
 echo "Static files copied to public/"
 
 echo "Build complete!"
+=======
+exec mastra build
+>>>>>>> a8e1405ee7bb2f8d8a246d291524010215e9dedc

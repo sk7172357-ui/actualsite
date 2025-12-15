@@ -211,7 +211,7 @@ export const mastra = new Mastra({
   },
   server: {
     host: "0.0.0.0",
-    port: parseInt(process.env.PORT || "5000"),
+    port: 5000,
     middleware: [
       async (c, next) => {
         const mastra = c.get("mastra");
@@ -894,37 +894,6 @@ export const mastra = new Mastra({
         },
       },
 
-      // Public event page
-      {
-        path: "/event/:id",
-        method: "GET",
-        handler: async (c) => {
-          const { readFile } = await import("fs/promises");
-          try {
-            const htmlPath = "./src/mastra/public/event.html";
-            const html = await readFile(htmlPath, "utf-8");
-            return c.html(html);
-          } catch (error) {
-            return c.text("Page not found", 404);
-          }
-        },
-      },
-
-      // Booking page
-      {
-        path: "/booking/:id",
-        method: "GET",
-        handler: async (c) => {
-          const { readFile } = await import("fs/promises");
-          try {
-            const htmlPath = "./src/mastra/public/booking.html";
-            const html = await readFile(htmlPath, "utf-8");
-            return c.html(html);
-          } catch (error) {
-            return c.text("Page not found", 404);
-          }
-        },
-      },
 
       // API to get single event details
       {
