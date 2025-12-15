@@ -1,19 +1,12 @@
 {
-  "name": "agent-stack-mastra",
+  "name": "biletiks-mastra",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "mastra dev",
-<<<<<<< HEAD
-    "build": "bash scripts/build.sh",
-    "build:mastra": "mastra build",
+    "build": "mastra build && npm run copy-public",
+    "copy-public": "mkdir -p .mastra/output/public && cp -r src/mastra/public/* .mastra/output/public/ 2>/dev/null || true",
     "start": "mastra start",
-    "postbuild": "cp -r src/mastra/public public 2>/dev/null || true",
-=======
-    "build": "mastra build",
-    "start": "mastra start",
->>>>>>> a8e1405ee7bb2f8d8a246d291524010215e9dedc
     "check": "tsc",
     "check:format": "prettier --check '**/*.ts'",
     "format": "prettier --write '**/*.ts'"
@@ -22,7 +15,7 @@
   "type": "module",
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "Билетная платформа с Telegram-ботом для администраторов",
   "engines": {
     "node": ">=20.9.0"
   },

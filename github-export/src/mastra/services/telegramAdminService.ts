@@ -2,23 +2,38 @@ import TelegramBot from "node-telegram-bot-api";
 
 // Telegram Bot Configuration - portable environment variables
 // TELEGRAM_BOT_TOKEN - токен бота от @BotFather
-// TELEGRAM_ADMIN_CHAT_ID - ID администратора для личных сообщений (узнать через @userinfobot)
+// ADMIN_TELEGRAM_ID - ID администратора для личных сообщений (узнать через @userinfobot)
 // TELEGRAM_GROUP_ID - (опционально) ID группы для групповых уведомлений
 // APP_URL - публичный URL приложения для webhook
+
+// Поддержка нескольких вариантов имён переменных для совместимости
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_GROUP_BOT_TOKEN;
-const ADMIN_CHAT_ID = process.env.TELEGRAM_ADMIN_CHAT_ID;
+const ADMIN_CHAT_ID = process.env.ADMIN_TELEGRAM_ID || process.env.TELEGRAM_ADMIN_CHAT_ID;
 const GROUP_ID = process.env.TELEGRAM_GROUP_ID;
+
+// Логируем статус конфигурации при старте (не падаем, только предупреждаем)
+if (!BOT_TOKEN) {
+  console.warn("⚠️ [TelegramAdmin] TELEGRAM_BOT_TOKEN не настроен - Telegram-уведомления отключены");
+}
+if (!ADMIN_CHAT_ID) {
+  console.warn("⚠️ [TelegramAdmin] ADMIN_TELEGRAM_ID не настроен - уведомления администратору отключены");
+}
 
 let bot: TelegramBot | null = null;
 let webhookInitialized = false;
 
 export function getBot(): TelegramBot | null {
   if (!BOT_TOKEN) {
-    console.error("❌ [TelegramAdmin] TELEGRAM_BOT_TOKEN not configured");
+    // Не падаем - просто возвращаем null, предупреждение уже было при старте
     return null;
   }
   if (!bot) {
-    bot = new TelegramBot(BOT_TOKEN);
+    try {
+      bot = new TelegramBot(BOT_TOKEN);
+    } catch (error) {
+      console.error("❌ [TelegramAdmin] Ошибка инициализации бота:", error);
+      return null;
+    }
   }
   return bot;
 }
