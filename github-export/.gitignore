@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+dist/
+build/
+.mastra/
+
+# Local config
+.config/
+.local/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Editor directories
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Database files (for local SQLite)
+*.db
+*.sqlite
+
+# Inngest local data
+.inngest/
