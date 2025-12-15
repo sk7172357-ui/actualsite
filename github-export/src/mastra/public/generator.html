@@ -1131,7 +1131,10 @@
           div.style.opacity = '0.3';
           div.style.cursor = 'not-allowed';
         } else {
-          div.onclick = () => selectDate(day);
+          div.onclick = (e) => {
+            e.stopPropagation();
+            selectDate(day);
+          };
         }
         
         if (selectedDate && 
@@ -1258,13 +1261,19 @@
       btn.textContent = 'Создание...';
       
       try {
+        // Форматируем дату вручную без конвертации в UTC (избегаем сдвига на день)
+        const year = selectedDate.getFullYear();
+        const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+        const day = String(selectedDate.getDate()).padStart(2, '0');
+        const formattedDate = `${year}-${month}-${day}`;
+        
         const res = await fetch('/api/generator/create-link', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             event_template_id: parseInt(eventId),
             city_id: parseInt(cityId),
-            event_date: selectedDate.toISOString().split('T')[0],
+            event_date: formattedDate,
             event_time: selectedTime,
             available_seats: parseInt(seats)
           })
@@ -1351,7 +1360,10 @@
         const div = document.createElement('div');
         div.className = 'calendar-day';
         div.textContent = day;
-        div.onclick = () => selectTicketDate(day);
+        div.onclick = (e) => {
+          e.stopPropagation();
+          selectTicketDate(day);
+        };
         
         if (ticketSelectedDate && 
             ticketSelectedDate.getFullYear() === ticketCurrentYear && 
