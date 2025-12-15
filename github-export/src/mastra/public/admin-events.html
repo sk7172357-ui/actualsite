@@ -234,6 +234,24 @@
     </div>
     
     <div class="links-section" style="margin-top: 40px;">
+      <h3>Отключить ссылку</h3>
+      <div style="background: white; padding: 20px; border-radius: 12px; max-width: 700px;">
+        <p style="color: #666; font-size: 13px; margin-bottom: 15px;">Вставьте ссылку чтобы найти и отключить её</p>
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+          <input type="text" id="linkToDisable" placeholder="Вставьте ссылку (например: /show/moskva/34/123)" style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;">
+          <button onclick="searchLink()" style="padding: 12px 24px; background: #2196F3; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer;">Найти</button>
+        </div>
+        <div id="linkSearchResult" style="display: none; background: #f5f5f5; padding: 15px; border-radius: 8px;">
+          <div id="linkInfo" style="margin-bottom: 15px;"></div>
+          <div style="display: flex; gap: 10px;">
+            <button id="toggleLinkBtn" onclick="toggleFoundLink()" style="padding: 10px 20px; background: #ff9800; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer;">Отключить</button>
+            <button onclick="deleteFoundLink()" style="padding: 10px 20px; background: #f44336; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer;">Удалить</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="links-section" style="margin-top: 40px;">
       <h3>Реквизиты для оплаты</h3>
       <div style="background: white; padding: 20px; border-radius: 12px; max-width: 500px;">
         <div class="form-group" style="margin-bottom: 15px;">
@@ -836,6 +854,109 @@
         await loadLinks();
       } catch (err) {
         console.error('Error deleting all links:', err);
+        alert('Ошибка удаления');
+      }
+    }
+    
+    let foundLinkId = null;
+    let foundLinkIsActive = false;
+    
+    async function searchLink() {
+      const input = document.getElementById('linkToDisable').value.trim();
+      const resultDiv = document.getElementById('linkSearchResult');
+      const infoDiv = document.getElementById('linkInfo');
+      
+      if (!input) {
+        alert('Вставьте ссылку');
+        return;
+      }
+      
+      // Извлекаем linkId из URL (последнее число в пути)
+      const match = input.match(/\/(\d+)(?:\?|$)/);
+      if (!match) {
+        infoDiv.innerHTML = '<p style="color: #f44336;">Не удалось извлечь ID ссылки. Формат: /show/city/eventId/linkId</p>';
+        resultDiv.style.display = 'block';
+        return;
+      }
+      
+      const linkId = match[1];
+      
+      try {
+        const res = await fetch('/api/generator/link-info/' + linkId, {
+          headers: getAuthHeaders()
+        });
+        
+        if (!res.ok) {
+          infoDiv.innerHTML = '<p style="color: #f44336;">Ссылка не найдена</p>';
+          resultDiv.style.display = 'block';
+          return;
+        }
+        
+        const link = await res.json();
+        foundLinkId = link.id;
+        foundLinkIsActive = link.is_active;
+        
+        const statusText = link.is_active ? '<span style="color: #4CAF50; font-weight: 600;">Активна</span>' : '<span style="color: #f44336; font-weight: 600;">Отключена</span>';
+        const toggleBtn = document.getElementById('toggleLinkBtn');
+        toggleBtn.textContent = link.is_active ? 'Отключить' : 'Включить';
+        toggleBtn.style.background = link.is_active ? '#ff9800' : '#4CAF50';
+        
+        infoDiv.innerHTML = `
+          <p><strong>Код:</strong> ${link.link_code || 'ID: ' + link.id}</p>
+          <p><strong>Мероприятие:</strong> ${link.event_name || 'Не указано'}</p>
+          <p><strong>Город:</strong> ${link.city_name || 'Не указан'}</p>
+          <p><strong>Дата:</strong> ${formatDate(link.event_date)} ${formatTime(link.event_time)}</p>
+          <p><strong>Статус:</strong> ${statusText}</p>
+        `;
+        resultDiv.style.display = 'block';
+      } catch (err) {
+        console.error('Error searching link:', err);
+        infoDiv.innerHTML = '<p style="color: #f44336;">Ошибка поиска</p>';
+        resultDiv.style.display = 'block';
+      }
+    }
+    
+    async function toggleFoundLink() {
+      if (!foundLinkId) return;
+      
+      try {
+        await toggleLink(foundLinkId, !foundLinkIsActive);
+        foundLinkIsActive = !foundLinkIsActive;
+        
+        const toggleBtn = document.getElementById('toggleLinkBtn');
+        toggleBtn.textContent = foundLinkIsActive ? 'Отключить' : 'Включить';
+        toggleBtn.style.background = foundLinkIsActive ? '#ff9800' : '#4CAF50';
+        
+        const statusText = foundLinkIsActive ? '<span style="color: #4CAF50; font-weight: 600;">Активна</span>' : '<span style="color: #f44336; font-weight: 600;">Отключена</span>';
+        document.querySelector('#linkInfo p:last-child').innerHTML = '<strong>Статус:</strong> ' + statusText;
+        
+        alert(foundLinkIsActive ? 'Ссылка включена' : 'Ссылка отключена');
+      } catch (err) {
+        alert('Ошибка');
+      }
+    }
+    
+    async function deleteFoundLink() {
+      if (!foundLinkId) return;
+      
+      if (!confirm('Удалить эту ссылку?')) return;
+      
+      try {
+        const res = await fetch('/api/generator/links/' + foundLinkId, {
+          method: 'DELETE',
+          headers: getAuthHeaders()
+        });
+        
+        if (res.ok) {
+          document.getElementById('linkSearchResult').style.display = 'none';
+          document.getElementById('linkToDisable').value = '';
+          foundLinkId = null;
+          alert('Ссылка удалена');
+          await loadLinks();
+        } else {
+          alert('Ошибка удаления');
+        }
+      } catch (err) {
         alert('Ошибка удаления');
       }
     }

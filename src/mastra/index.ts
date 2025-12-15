@@ -2558,6 +2558,39 @@ export const mastra = new Mastra({
         },
       },
 
+      // Generator API - Get link info by ID
+      {
+        path: "/api/generator/link-info/:id",
+        method: "GET",
+        handler: async (c) => {
+          try {
+            const linkId = c.req.param("id");
+            
+            const pg = await import("pg");
+            const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+            
+            const result = await pool.query(`
+              SELECT gl.*, et.name as event_name, c.name as city_name
+              FROM generated_links gl
+              LEFT JOIN event_templates et ON gl.event_template_id = et.id
+              LEFT JOIN cities c ON gl.city_id = c.id
+              WHERE gl.id = $1
+            `, [linkId]);
+            
+            await pool.end();
+            
+            if (result.rows.length === 0) {
+              return c.json({ error: "Link not found" }, 404);
+            }
+            
+            return c.json(result.rows[0]);
+          } catch (error) {
+            console.error("Error fetching link info:", error);
+            return c.json({ error: "Server error" }, 500);
+          }
+        },
+      },
+
       // Generator API - Toggle link status
       {
         path: "/api/generator/links/:id/toggle",
