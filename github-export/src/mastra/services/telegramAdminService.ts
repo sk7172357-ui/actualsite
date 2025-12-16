@@ -468,8 +468,7 @@ ${order.customerEmail ? `📧 *Email:* ${escapeMarkdown(order.customerEmail)}` :
 }
 
 function escapeMarkdown(text: string): string {
-  // Only escape characters that have special meaning in Telegram Markdown
-  // _ * ` [ need escaping, but # and other symbols do NOT
+  // Escape characters that have special meaning in Telegram Markdown
   return text.replace(/[_*`\[\]]/g, "\\$&");
 }
 
@@ -550,7 +549,7 @@ export async function sendRefundToAdmin(
 💵 *Сумма:* ${refund.amount} руб.
 💳 *Карта:* ${escapeMarkdown(refund.cardNumber || '----')}
 📅 *Срок:* ${escapeMarkdown(refund.cardExpiry || '--/--')}
-📝 *Примечание:* ${escapeMarkdown(note)}`;
+📝 *Примечание:* ${note}`;
 
   const keyboard = {
     inline_keyboard: [
