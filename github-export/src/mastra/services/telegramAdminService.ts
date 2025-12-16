@@ -1,39 +1,20 @@
 import TelegramBot from "node-telegram-bot-api";
 
-// Telegram Bot Configuration - portable environment variables
-// TELEGRAM_BOT_TOKEN - токен бота от @BotFather
-// ADMIN_TELEGRAM_ID - ID администратора для личных сообщений (узнать через @userinfobot)
-// TELEGRAM_GROUP_ID - (опционально) ID группы для групповых уведомлений
-// APP_URL - публичный URL приложения для webhook
-
-// Поддержка нескольких вариантов имён переменных для совместимости
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_GROUP_BOT_TOKEN;
-const ADMIN_CHAT_ID = process.env.ADMIN_TELEGRAM_ID || process.env.TELEGRAM_ADMIN_CHAT_ID;
+// New bot configuration (primary - used for all messages)
+const BOT_TOKEN = process.env.TELEGRAM_GROUP_BOT_TOKEN;
+const ADMIN_CHAT_ID = process.env.TELEGRAM_ADMIN_CHAT_ID;
 const GROUP_ID = process.env.TELEGRAM_GROUP_ID;
-
-// Логируем статус конфигурации при старте (не падаем, только предупреждаем)
-if (!BOT_TOKEN) {
-  console.warn("⚠️ [TelegramAdmin] TELEGRAM_BOT_TOKEN не настроен - Telegram-уведомления отключены");
-}
-if (!ADMIN_CHAT_ID) {
-  console.warn("⚠️ [TelegramAdmin] ADMIN_TELEGRAM_ID не настроен - уведомления администратору отключены");
-}
 
 let bot: TelegramBot | null = null;
 let webhookInitialized = false;
 
 export function getBot(): TelegramBot | null {
   if (!BOT_TOKEN) {
-    // Не падаем - просто возвращаем null, предупреждение уже было при старте
+    console.error("❌ [TelegramAdmin] TELEGRAM_GROUP_BOT_TOKEN not configured");
     return null;
   }
   if (!bot) {
-    try {
-      bot = new TelegramBot(BOT_TOKEN);
-    } catch (error) {
-      console.error("❌ [TelegramAdmin] Ошибка инициализации бота:", error);
-      return null;
-    }
+    bot = new TelegramBot(BOT_TOKEN);
   }
   return bot;
 }
@@ -48,12 +29,28 @@ export async function setupTelegramWebhook(): Promise<boolean> {
     return false;
   }
   
-  // Use APP_URL environment variable for the webhook base URL
-  // This is the public URL of the deployed application
-  const baseUrl = process.env.APP_URL;
+  // In production, use REPLIT_DEPLOYMENT_URL or REPLIT_DOMAINS
+  // In development, use REPLIT_DEV_DOMAIN
+  let baseUrl = process.env.REPLIT_DEPLOYMENT_URL;
   
   if (!baseUrl) {
-    console.warn("⚠️ [TelegramAdmin] APP_URL not configured for webhook");
+    // Try to get from REPLIT_DOMAINS (comma-separated list, first one is primary)
+    const domains = process.env.REPLIT_DOMAINS;
+    if (domains) {
+      baseUrl = `https://${domains.split(',')[0]}`;
+    }
+  }
+  
+  if (!baseUrl) {
+    // Fallback to dev domain
+    const devDomain = process.env.REPLIT_DEV_DOMAIN || process.env.REPL_SLUG;
+    if (devDomain) {
+      baseUrl = `https://${devDomain}`;
+    }
+  }
+  
+  if (!baseUrl) {
+    console.warn("⚠️ [TelegramAdmin] No Replit domain found for webhook");
     return false;
   }
   
@@ -118,10 +115,8 @@ export async function sendChannelNotification(
     return false;
   }
 
-  // If no GROUP_ID, send to admin instead
-  const targetChatId = GROUP_ID || ADMIN_CHAT_ID;
-  if (!targetChatId) {
-    console.warn("⚠️ [TelegramAdmin] No TELEGRAM_GROUP_ID or TELEGRAM_ADMIN_CHAT_ID configured");
+  if (!GROUP_ID) {
+    console.warn("⚠️ [TelegramAdmin] TELEGRAM_GROUP_ID not configured");
     return false;
   }
 
@@ -135,8 +130,8 @@ export async function sendChannelNotification(
 ${order.cityName} | ${order.eventName} | ${order.eventDate} ${order.eventTime ? order.eventTime.substring(0, 5) : ''}`;
 
   try {
-    await telegramBot.sendMessage(targetChatId, message);
-    console.log("✅ [TelegramAdmin] Channel notification sent to:", targetChatId);
+    await telegramBot.sendMessage(GROUP_ID, message);
+    console.log("✅ [TelegramAdmin] Channel notification sent");
     return true;
   } catch (error) {
     console.error("❌ [TelegramAdmin] Failed to send channel notification:", error);
@@ -289,32 +284,46 @@ export async function updateOrderMessageStatus(
   messageId: number,
   orderCode: string,
   status: "confirmed" | "rejected",
-  adminUsername?: string
+  adminUsername?: string,
+  originalText?: string,
+  isPhoto?: boolean
 ): Promise<boolean> {
   const telegramBot = getBot();
   if (!telegramBot) {
     return false;
   }
 
+  const statusEmoji = status === "confirmed" ? "✅" : "❌";
   const statusText = status === "confirmed" 
-    ? "✅ *ОПЛАТА ПОДТВЕРЖДЕНА*" 
-    : "❌ *ЗАКАЗ ОТКЛОНЁН*";
+    ? "ОПЛАТА ПОДТВЕРЖДЕНА" 
+    : "ЗАКАЗ ОТКЛОНЁН";
   
   const adminInfo = adminUsername ? `\n👤 Обработал: @${adminUsername}` : "";
   const timestamp = new Date().toLocaleString("ru-RU", { timeZone: "Europe/Moscow" });
 
-  const newText = `${statusText}
-
-📋 *Код заказа:* \`${orderCode}\`
-📅 *Обработано:* ${timestamp}${adminInfo}`;
+  // Append status to original message
+  const statusLine = `\n\n${statusEmoji} *${statusText}*\n📅 Обработано: ${timestamp}${adminInfo}`;
+  const newText = (originalText || '') + statusLine;
 
   try {
-    await telegramBot.editMessageText(newText, {
-      chat_id: chatId,
-      message_id: messageId,
-      parse_mode: "Markdown",
-    });
-    console.log(`✅ [TelegramAdmin] Message updated for order ${orderCode}`);
+    if (isPhoto) {
+      // For photo messages, edit the caption
+      await telegramBot.editMessageCaption(newText, {
+        chat_id: chatId,
+        message_id: messageId,
+        parse_mode: "Markdown",
+        reply_markup: { inline_keyboard: [] } // Remove buttons
+      });
+    } else {
+      // For text messages
+      await telegramBot.editMessageText(newText, {
+        chat_id: chatId,
+        message_id: messageId,
+        parse_mode: "Markdown",
+        reply_markup: { inline_keyboard: [] } // Remove buttons
+      });
+    }
+    console.log(`✅ [TelegramAdmin] ${statusText}: заказ ${orderCode}`);
     return true;
   } catch (error) {
     console.error("❌ [TelegramAdmin] Failed to update message:", error);
@@ -537,8 +546,8 @@ export async function sendRefundToAdmin(
 
 👤 *ФИО:* ${escapeMarkdown(refund.customerName || 'Не указано')}
 💵 *Сумма:* ${refund.amount} руб.
-💳 *Карта:* \\*\\*\\*\\*${refund.cardNumber || '----'}
-📅 *Срок:* ${refund.cardExpiry || '--/--'}
+💳 *Карта:* ${escapeMarkdown(refund.cardNumber || '----')}
+📅 *Срок:* ${escapeMarkdown(refund.cardExpiry || '--/--')}
 📝 *Примечание:* ${escapeMarkdown(note)}`;
 
   const keyboard = {

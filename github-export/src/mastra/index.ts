@@ -788,20 +788,27 @@ export const mastra = new Mastra({
                     await answerCallbackQuery(callbackQuery.id, "❌ Возврат отклонён");
                   }
                   
-                  // Update the message to show status
+                  // Update the message to show status - preserve original message
                   const timestamp = new Date().toLocaleString("ru-RU", { timeZone: "Europe/Moscow" });
                   const statusEmoji = refundAction === "approve" ? "✅" : "❌";
                   const statusText = refundAction === "approve" ? "ВОЗВРАТ ОДОБРЕН" : "ВОЗВРАТ ОТКЛОНЁН";
-                  const newText = `${statusEmoji} *${statusText}*\n\n📋 *Код:* \`${refundCode}\`\n💵 *Сумма:* ${refund.amount} руб.\n📅 *Обработано:* ${timestamp}`;
+                  
+                  // Get original message text and append status
+                  const originalText = callbackQuery.message?.text || '';
+                  const statusLine = `\n\n${statusEmoji} *${statusText}*\n📅 Обработано: ${timestamp}`;
+                  const newText = originalText + statusLine;
                   
                   const telegramBot = getBot();
                   if (telegramBot) {
                     await telegramBot.editMessageText(newText, {
                       chat_id: chatId,
                       message_id: messageId,
-                      parse_mode: "Markdown"
+                      parse_mode: "Markdown",
+                      reply_markup: { inline_keyboard: [] } // Remove buttons
                     });
                   }
+                  
+                  console.log(`✅ [Refund] ${statusText}: ${refundCode}`);
                   
                 } catch (err) {
                   console.error("Error processing refund callback:", err);
@@ -840,12 +847,19 @@ export const mastra = new Mastra({
               
               if (result.success && result.order) {
                 const status = action === "confirm" ? "confirmed" : "rejected";
+                
+                // Get original message text/caption to preserve it
+                const originalText = callbackQuery.message?.caption || callbackQuery.message?.text || '';
+                const isPhoto = !!callbackQuery.message?.photo;
+                
                 await updateOrderMessageStatus(
                   chatId,
                   messageId,
                   result.order.orderCode,
                   status,
-                  adminUsername
+                  adminUsername,
+                  originalText,
+                  isPhoto
                 );
                 await answerCallbackQuery(
                   callbackQuery.id, 

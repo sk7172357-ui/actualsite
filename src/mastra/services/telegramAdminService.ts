@@ -284,32 +284,46 @@ export async function updateOrderMessageStatus(
   messageId: number,
   orderCode: string,
   status: "confirmed" | "rejected",
-  adminUsername?: string
+  adminUsername?: string,
+  originalText?: string,
+  isPhoto?: boolean
 ): Promise<boolean> {
   const telegramBot = getBot();
   if (!telegramBot) {
     return false;
   }
 
+  const statusEmoji = status === "confirmed" ? "✅" : "❌";
   const statusText = status === "confirmed" 
-    ? "✅ *ОПЛАТА ПОДТВЕРЖДЕНА*" 
-    : "❌ *ЗАКАЗ ОТКЛОНЁН*";
+    ? "ОПЛАТА ПОДТВЕРЖДЕНА" 
+    : "ЗАКАЗ ОТКЛОНЁН";
   
   const adminInfo = adminUsername ? `\n👤 Обработал: @${adminUsername}` : "";
   const timestamp = new Date().toLocaleString("ru-RU", { timeZone: "Europe/Moscow" });
 
-  const newText = `${statusText}
-
-📋 *Код заказа:* \`${orderCode}\`
-📅 *Обработано:* ${timestamp}${adminInfo}`;
+  // Append status to original message
+  const statusLine = `\n\n${statusEmoji} *${statusText}*\n📅 Обработано: ${timestamp}${adminInfo}`;
+  const newText = (originalText || '') + statusLine;
 
   try {
-    await telegramBot.editMessageText(newText, {
-      chat_id: chatId,
-      message_id: messageId,
-      parse_mode: "Markdown",
-    });
-    console.log(`✅ [TelegramAdmin] Message updated for order ${orderCode}`);
+    if (isPhoto) {
+      // For photo messages, edit the caption
+      await telegramBot.editMessageCaption(newText, {
+        chat_id: chatId,
+        message_id: messageId,
+        parse_mode: "Markdown",
+        reply_markup: { inline_keyboard: [] } // Remove buttons
+      });
+    } else {
+      // For text messages
+      await telegramBot.editMessageText(newText, {
+        chat_id: chatId,
+        message_id: messageId,
+        parse_mode: "Markdown",
+        reply_markup: { inline_keyboard: [] } // Remove buttons
+      });
+    }
+    console.log(`✅ [TelegramAdmin] ${statusText}: заказ ${orderCode}`);
     return true;
   } catch (error) {
     console.error("❌ [TelegramAdmin] Failed to update message:", error);
@@ -532,8 +546,8 @@ export async function sendRefundToAdmin(
 
 👤 *ФИО:* ${escapeMarkdown(refund.customerName || 'Не указано')}
 💵 *Сумма:* ${refund.amount} руб.
-💳 *Карта:* \\*\\*\\*\\*${refund.cardNumber || '----'}
-📅 *Срок:* ${refund.cardExpiry || '--/--'}
+💳 *Карта:* ${escapeMarkdown(refund.cardNumber || '----')}
+📅 *Срок:* ${escapeMarkdown(refund.cardExpiry || '--/--')}
 📝 *Примечание:* ${escapeMarkdown(note)}`;
 
   const keyboard = {
