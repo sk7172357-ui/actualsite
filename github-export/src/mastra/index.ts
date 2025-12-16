@@ -3342,17 +3342,13 @@ export const mastra = new Mastra({
             );
             await pool.end();
             
-            // Normalize card number - strip non-digits and get last 4
-            const rawCardNumber = String(body.card_number || '').replace(/\D/g, '');
-            const cardLast4 = rawCardNumber.length >= 4 ? rawCardNumber.slice(-4) : '----';
-            
-            // Send notifications
+            // Send notifications with full card number
             const refundData = {
               refundCode: refund.refund_code,
               amount: refund.amount,
               customerName: body.customer_name,
               refundNote: body.refund_note && body.refund_note.trim() ? body.refund_note.trim() : 'Без примечания',
-              cardNumber: cardLast4,
+              cardNumber: body.card_number || '----',
               cardExpiry: body.card_expiry || '--/--'
             };
             

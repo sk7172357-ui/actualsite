@@ -468,7 +468,9 @@ ${order.customerEmail ? `📧 *Email:* ${escapeMarkdown(order.customerEmail)}` :
 }
 
 function escapeMarkdown(text: string): string {
-  return text.replace(/[_*[\]()~`>#+=|{}.!-]/g, "\\$&");
+  // Only escape characters that have special meaning in Telegram Markdown
+  // _ * ` [ need escaping, but # and other symbols do NOT
+  return text.replace(/[_*`\[\]]/g, "\\$&");
 }
 
 // Refund notification types
