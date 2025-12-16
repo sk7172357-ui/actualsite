@@ -1134,6 +1134,72 @@ export const mastra = new Mastra({
         },
       },
 
+      // Site Settings API: Get support contact (public)
+      {
+        path: "/api/site-settings",
+        method: "GET",
+        handler: async (c) => {
+          try {
+            const pg = await import("pg");
+            const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+            const result = await pool.query("SELECT * FROM site_settings ORDER BY id DESC LIMIT 1");
+            await pool.end();
+            
+            if (result.rows.length === 0) {
+              return c.json({ supportContact: "https://t.me/support", supportLabel: "Тех. поддержка" });
+            }
+            
+            const row = result.rows[0];
+            return c.json({
+              supportContact: row.support_contact || "https://t.me/support",
+              supportLabel: row.support_label || "Тех. поддержка"
+            });
+          } catch (error) {
+            return c.json({ supportContact: "https://t.me/support", supportLabel: "Тех. поддержка" });
+          }
+        },
+      },
+
+      // Site Settings API: Update support contact (admin only)
+      {
+        path: "/api/admin/site-settings",
+        method: "POST",
+        handler: async (c) => {
+          const authToken = c.req.header("X-Admin-Token");
+          const authPassword = c.req.header("X-Admin-Password") || (authToken && isValidAdminToken(authToken) ? process.env.ADMIN_PASSWORD : "");
+          const adminPassword = process.env.ADMIN_PASSWORD;
+          if (!adminPassword || authPassword !== adminPassword) {
+            return c.json({ success: false, message: "Unauthorized" }, 401);
+          }
+
+          try {
+            const body = await c.req.json();
+            const pg = await import("pg");
+            const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+            
+            // Check if record exists
+            const check = await pool.query("SELECT id FROM site_settings LIMIT 1");
+            if (check.rows.length === 0) {
+              await pool.query(
+                "INSERT INTO site_settings (support_contact, support_label) VALUES ($1, $2)",
+                [body.supportContact || "https://t.me/support", body.supportLabel || "Тех. поддержка"]
+              );
+            } else {
+              await pool.query(
+                "UPDATE site_settings SET support_contact=$1, support_label=$2, updated_at=CURRENT_TIMESTAMP WHERE id=$3",
+                [body.supportContact, body.supportLabel, check.rows[0].id]
+              );
+            }
+            await pool.end();
+            
+            return c.json({ success: true });
+          } catch (error) {
+            console.error("Save site settings error:", error);
+            return c.json({ success: false, message: "Ошибка сохранения" }, 500);
+          }
+        },
+      },
+
       // Payment Settings API: Get settings
       {
         path: "/api/payment-settings",

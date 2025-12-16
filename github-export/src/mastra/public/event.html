@@ -729,6 +729,7 @@
           <a href="/#cat-7">Бильярд</a>
           <a href="/#cat-8">Боулинг</a>
           <a href="/">На главную</a>
+          <a href="#" id="supportLink" target="_blank" style="color: #e53935; font-weight: 600;">Тех. поддержка</a>
         </div>
       </div>
       <div class="footer-copy">© 1999-2025 ООО «Компания Афиша». Все права защищены. Для лиц старше 18 лет.</div>
@@ -1534,6 +1535,20 @@
     }
     
     loadData();
+    
+    // Load support contact
+    async function loadSupportSettings() {
+      try {
+        const res = await fetch('/api/site-settings');
+        const data = await res.json();
+        const link = document.getElementById('supportLink');
+        if (link && data.supportContact) {
+          link.href = data.supportContact;
+          link.textContent = data.supportLabel || 'Тех. поддержка';
+        }
+      } catch (e) {}
+    }
+    loadSupportSettings();
   </script>
 <script src="//code.tidio.co/ufjldpy2fgwbem1lrdwd8yqubddfk15k.js" async></script>
 </body>

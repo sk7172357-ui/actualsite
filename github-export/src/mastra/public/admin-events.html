@@ -291,6 +291,21 @@
     </div>
     
     <div class="links-section" style="margin-top: 40px;">
+      <h3>Тех. поддержка</h3>
+      <div style="background: white; padding: 20px; border-radius: 12px; max-width: 500px;">
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: 500;">Ссылка на поддержку</label>
+          <input type="text" id="supportContact" placeholder="https://t.me/username или https://wa.me/79001234567" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px;">
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: 500;">Текст ссылки</label>
+          <input type="text" id="supportLabel" placeholder="Тех. поддержка" value="Тех. поддержка" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px;">
+        </div>
+        <button onclick="saveSupportSettings()" style="padding: 12px 24px; background: #4CAF50; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer;">Сохранить</button>
+      </div>
+    </div>
+    
+    <div class="links-section" style="margin-top: 40px;">
       <h3>Управление городами</h3>
       <div style="background: white; padding: 20px; border-radius: 12px; max-width: 600px;">
         <div style="display: flex; gap: 10px; margin-bottom: 15px;">
@@ -468,7 +483,7 @@
     checkAuthAndInit();
     
     async function init() {
-      await Promise.all([loadCategories(), loadLinks(), loadPaymentSettings(), loadCities(), loadRefunds()]);
+      await Promise.all([loadCategories(), loadLinks(), loadPaymentSettings(), loadSupportSettings(), loadCities(), loadRefunds()]);
     }
     
     let refunds = [];
@@ -613,6 +628,42 @@
         document.getElementById('paymentSbpEnabled').checked = data.sbpEnabled !== false;
       } catch (err) {
         console.error('Error loading payment settings:', err);
+      }
+    }
+    
+    async function loadSupportSettings() {
+      try {
+        const res = await fetch('/api/site-settings');
+        const data = await res.json();
+        document.getElementById('supportContact').value = data.supportContact || '';
+        document.getElementById('supportLabel').value = data.supportLabel || 'Тех. поддержка';
+      } catch (err) {
+        console.error('Error loading support settings:', err);
+      }
+    }
+    
+    async function saveSupportSettings() {
+      try {
+        const supportContact = document.getElementById('supportContact').value;
+        const supportLabel = document.getElementById('supportLabel').value;
+        
+        const res = await fetch('/api/admin/site-settings', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders()
+          },
+          body: JSON.stringify({ supportContact, supportLabel })
+        });
+        
+        if (res.ok) {
+          alert('Настройки поддержки сохранены');
+        } else {
+          alert('Ошибка сохранения');
+        }
+      } catch (err) {
+        console.error('Error saving support settings:', err);
+        alert('Ошибка сохранения');
       }
     }
     
