@@ -1535,20 +1535,24 @@
     
     loadData();
     
-    // Load chat widget script from settings
-    async function loadChatWidget() {
+    // Load chat widget
+    (async function() {
       try {
         const res = await fetch('/api/site-settings');
         const data = await res.json();
         if (data.chatScript) {
-          const script = document.createElement('script');
-          script.src = data.chatScript;
-          script.async = true;
-          document.body.appendChild(script);
+          const div = document.createElement('div');
+          div.innerHTML = data.chatScript;
+          Array.from(div.querySelectorAll('script')).forEach(oldScript => {
+            const newScript = document.createElement('script');
+            Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+            newScript.textContent = oldScript.textContent;
+            document.body.appendChild(newScript);
+          });
+          Array.from(div.querySelectorAll('noscript')).forEach(el => document.body.appendChild(el));
         }
-      } catch (e) {}
-    }
-    loadChatWidget();
+      } catch(e) {}
+    })();
   </script>
 </body>
 </html>

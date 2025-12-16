@@ -291,12 +291,12 @@
     </div>
     
     <div class="links-section" style="margin-top: 40px;">
-      <h3>Онлайн-чат (Tidio)</h3>
+      <h3>Онлайн-чат (LiveChat)</h3>
       <div style="background: white; padding: 20px; border-radius: 12px; max-width: 600px;">
         <div class="form-group" style="margin-bottom: 15px;">
-          <label style="display: block; margin-bottom: 5px; font-weight: 500;">Скрипт чата</label>
-          <input type="text" id="chatScript" placeholder="//code.tidio.co/ваш_код.js" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px;">
-          <small style="display: block; margin-top: 8px; color: #666;">Вставьте URL скрипта из Tidio (без тега script). Пример: //code.tidio.co/abc123.js</small>
+          <label style="display: block; margin-bottom: 5px; font-weight: 500;">Код виджета чата</label>
+          <textarea id="chatScript" placeholder="Вставьте полный код виджета..." style="width: 100%; height: 150px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; font-family: monospace; resize: vertical;"></textarea>
+          <small style="display: block; margin-top: 8px; color: #666;">Вставьте полный HTML/JS код виджета чата (LiveChat, Tidio и т.д.)</small>
         </div>
         <button onclick="saveChatSettings()" style="padding: 12px 24px; background: #4CAF50; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer;">Сохранить</button>
       </div>
