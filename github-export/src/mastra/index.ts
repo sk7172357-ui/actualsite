@@ -1152,10 +1152,11 @@ export const mastra = new Mastra({
             const row = result.rows[0];
             return c.json({
               supportContact: row.support_contact || "https://t.me/support",
-              supportLabel: row.support_label || "Тех. поддержка"
+              supportLabel: row.support_label || "Тех. поддержка",
+              chatScript: row.chat_script || "//code.tidio.co/ufjldpy2fgwbem1lrdwd8yqubddfk15k.js"
             });
           } catch (error) {
-            return c.json({ supportContact: "https://t.me/support", supportLabel: "Тех. поддержка" });
+            return c.json({ supportContact: "https://t.me/support", supportLabel: "Тех. поддержка", chatScript: "//code.tidio.co/ufjldpy2fgwbem1lrdwd8yqubddfk15k.js" });
           }
         },
       },
@@ -1181,13 +1182,13 @@ export const mastra = new Mastra({
             const check = await pool.query("SELECT id FROM site_settings LIMIT 1");
             if (check.rows.length === 0) {
               await pool.query(
-                "INSERT INTO site_settings (support_contact, support_label) VALUES ($1, $2)",
-                [body.supportContact || "https://t.me/support", body.supportLabel || "Тех. поддержка"]
+                "INSERT INTO site_settings (support_contact, support_label, chat_script) VALUES ($1, $2, $3)",
+                [body.supportContact || "https://t.me/support", body.supportLabel || "Тех. поддержка", body.chatScript || "//code.tidio.co/ufjldpy2fgwbem1lrdwd8yqubddfk15k.js"]
               );
             } else {
               await pool.query(
-                "UPDATE site_settings SET support_contact=$1, support_label=$2, updated_at=CURRENT_TIMESTAMP WHERE id=$3",
-                [body.supportContact, body.supportLabel, check.rows[0].id]
+                "UPDATE site_settings SET support_contact=$1, support_label=$2, chat_script=$3, updated_at=CURRENT_TIMESTAMP WHERE id=$4",
+                [body.supportContact, body.supportLabel, body.chatScript, check.rows[0].id]
               );
             }
             await pool.end();
