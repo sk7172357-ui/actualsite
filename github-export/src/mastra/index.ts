@@ -49,6 +49,59 @@ setTimeout(() => {
   });
 }, 3000);
 
+// Initialize database tables on startup
+async function initDatabaseTables() {
+  const dbUrl = process.env.DATABASE_URL;
+  if (!dbUrl) return;
+  
+  try {
+    const pg = await import("pg");
+    const pool = new pg.Pool({ connectionString: dbUrl });
+    
+    // Create site_settings table if not exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS site_settings (
+        id SERIAL PRIMARY KEY,
+        support_contact VARCHAR(255) DEFAULT 'https://t.me/support',
+        support_label VARCHAR(255) DEFAULT 'Тех. поддержка',
+        chat_script TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
+    // Ensure chat_script column is TEXT type
+    await pool.query(`
+      ALTER TABLE site_settings ALTER COLUMN chat_script TYPE TEXT
+    `).catch(() => {});
+    
+    // Insert default row with LiveChat if empty
+    const check = await pool.query("SELECT id FROM site_settings LIMIT 1");
+    if (check.rows.length === 0) {
+      const defaultChat = `<!-- Start of LiveChat (www.livechat.com) code -->
+<script>
+    window.__lc = window.__lc || {};
+    window.__lc.license = 19416545;
+    window.__lc.integration_name = "manual_onboarding";
+    window.__lc.product_name = "livechat";
+    ;(function(n,t,c){function i(n){return e._h?e._h.apply(null,n):e._q.push(n)}var e={_q:[],_h:null,_v:"2.0",on:function(){i(["on",c.call(arguments)])},once:function(){i(["once",c.call(arguments)])},off:function(){i(["off",c.call(arguments)])},get:function(){if(!e._h)throw new Error("[LiveChatWidget] You can't use getters before load.");return i(["get",c.call(arguments)])},call:function(){i(["call",c.call(arguments)])},init:function(){var n=t.createElement("script");n.async=!0,n.type="text/javascript",n.src="https://cdn.livechatinc.com/tracking.js",t.head.appendChild(n)}};!n.__lc.asyncInit&&e.init(),n.LiveChatWidget=n.LiveChatWidget||e}(window,document,[].slice))
+</script>
+<noscript><a href="https://www.livechat.com/chat-with/19416545/" rel="nofollow">Chat with us</a>, powered by <a href="https://www.livechat.com/?welcome" rel="noopener nofollow" target="_blank">LiveChat</a></noscript>
+<!-- End of LiveChat code -->`;
+      await pool.query(
+        "INSERT INTO site_settings (support_contact, support_label, chat_script) VALUES ($1, $2, $3)",
+        ["https://t.me/support", "Тех. поддержка", defaultChat]
+      );
+    }
+    
+    await pool.end();
+    console.log("✅ [DB] Database tables initialized");
+  } catch (error) {
+    console.error("[DB] Init error:", error);
+  }
+}
+initDatabaseTables();
+
 // Helper function to generate unique link codes with LNK- prefix
 function generateLinkCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
