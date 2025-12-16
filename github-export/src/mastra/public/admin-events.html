@@ -291,14 +291,46 @@
     </div>
     
     <div class="links-section" style="margin-top: 40px;">
-      <h3>Онлайн-чат (LiveChat)</h3>
+      <h3>Онлайн-чат</h3>
       <div style="background: white; padding: 20px; border-radius: 12px; max-width: 600px;">
-        <div class="form-group" style="margin-bottom: 15px;">
-          <label style="display: block; margin-bottom: 5px; font-weight: 500;">Код виджета чата</label>
-          <textarea id="chatScript" placeholder="Вставьте полный код виджета..." style="width: 100%; height: 150px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; font-family: monospace; resize: vertical;"></textarea>
-          <small style="display: block; margin-top: 8px; color: #666;">Вставьте полный HTML/JS код виджета чата (LiveChat, Tidio и т.д.)</small>
+        <div id="chatStatusView">
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+            <span id="chatStatusBadge" style="padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500;">Загрузка...</span>
+            <span id="chatProviderName" style="color: #666; font-size: 14px;"></span>
+          </div>
+          <button onclick="showChatEditModal()" style="padding: 10px 20px; background: #1976d2; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer;">Изменить виджет чата</button>
         </div>
-        <button onclick="saveChatSettings()" style="padding: 12px 24px; background: #4CAF50; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer;">Сохранить</button>
+      </div>
+    </div>
+    
+    <div class="modal-overlay" id="chatEditModal">
+      <div class="modal" style="max-width: 700px;">
+        <div class="modal-header">
+          <h2>Изменить виджет чата</h2>
+          <button class="modal-close" onclick="closeChatModal()">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 20px;">
+          <div id="chatPasswordStep">
+            <p style="margin-bottom: 15px; color: #666;">Для изменения настроек чата введите пароль администратора:</p>
+            <input type="password" id="chatEditPassword" placeholder="Пароль" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; margin-bottom: 15px;">
+            <button onclick="verifyChatPassword()" style="padding: 12px 24px; background: #4CAF50; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer;">Подтвердить</button>
+            <p id="chatPasswordError" style="color: #f44336; font-size: 13px; margin-top: 10px; display: none;">Неверный пароль</p>
+          </div>
+          <div id="chatEditStep" style="display: none;">
+            <div style="margin-bottom: 20px;">
+              <label style="display: block; margin-bottom: 8px; font-weight: 500;">Выберите чат-провайдер:</label>
+              <div id="chatPresets" style="display: grid; gap: 10px;"></div>
+            </div>
+            <div style="margin-bottom: 15px;">
+              <label style="display: block; margin-bottom: 5px; font-weight: 500;">Или вставьте свой код:</label>
+              <textarea id="chatScriptEdit" placeholder="Вставьте полный HTML/JS код виджета..." style="width: 100%; height: 120px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 12px; font-family: monospace; resize: vertical;"></textarea>
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <button onclick="saveChatFromModal()" style="padding: 12px 24px; background: #4CAF50; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer;">Сохранить</button>
+              <button onclick="clearChatWidget()" style="padding: 12px 24px; background: #f44336; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer;">Отключить чат</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     
@@ -480,7 +512,7 @@
     checkAuthAndInit();
     
     async function init() {
-      await Promise.all([loadCategories(), loadLinks(), loadPaymentSettings(), loadSupportSettings(), loadCities(), loadRefunds()]);
+      await Promise.all([loadCategories(), loadLinks(), loadPaymentSettings(), loadChatStatus(), loadCities(), loadRefunds()]);
     }
     
     let refunds = [];
@@ -628,19 +660,128 @@
       }
     }
     
-    async function loadSupportSettings() {
+    const chatPresets = [
+      { name: 'LiveChat', code: `<!-- Start of LiveChat (www.livechat.com) code -->
+<script>
+    window.__lc = window.__lc || {};
+    window.__lc.license = 19416545;
+    window.__lc.integration_name = "manual_onboarding";
+    window.__lc.product_name = "livechat";
+    ;(function(n,t,c){function i(n){return e._h?e._h.apply(null,n):e._q.push(n)}var e={_q:[],_h:null,_v:"2.0",on:function(){i(["on",c.call(arguments)])},once:function(){i(["once",c.call(arguments)])},off:function(){i(["off",c.call(arguments)])},get:function(){if(!e._h)throw new Error("[LiveChatWidget] You can't use getters before load.");return i(["get",c.call(arguments)])},call:function(){i(["call",c.call(arguments)])},init:function(){var n=t.createElement("script");n.async=!0,n.type="text/javascript",n.src="https://cdn.livechatinc.com/tracking.js",t.head.appendChild(n)}};!n.__lc.asyncInit&&e.init(),n.LiveChatWidget=n.LiveChatWidget||e}(window,document,[].slice))
+</script>
+<noscript><a href="https://www.livechat.com/chat-with/19416545/" rel="nofollow">Chat with us</a>, powered by <a href="https://www.livechat.com/?welcome" rel="noopener nofollow" target="_blank">LiveChat</a></noscript>
+<!-- End of LiveChat code -->` },
+      { name: 'Tidio', code: '<script src="//code.tidio.co/ВАШ_КОД.js" async></script>' },
+      { name: 'Tawk.to', code: `<!--Start of Tawk.to Script-->
+<script type="text/javascript">
+var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+(function(){
+var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+s1.async=true;
+s1.src='https://embed.tawk.to/ВАШ_ID/default';
+s1.charset='UTF-8';
+s1.setAttribute('crossorigin','*');
+s0.parentNode.insertBefore(s1,s0);
+})();
+</script>
+<!--End of Tawk.to Script-->` },
+      { name: 'JivoSite', code: '<script src="//code.jivosite.com/widget/ВАШ_ID" async></script>' },
+      { name: 'Chatra', code: `<script>
+    (function(d, w, c) {
+        w.ChatraID = 'ВАШ_ID';
+        var s = d.createElement('script');
+        w[c] = w[c] || function() {
+            (w[c].q = w[c].q || []).push(arguments);
+        };
+        s.async = true;
+        s.src = 'https://call.chatra.io/chatra.js';
+        if (d.head) d.head.appendChild(s);
+    })(document, window, 'Chatra');
+</script>` },
+      { name: 'Crisp', code: `<script type="text/javascript">
+window.$crisp=[];window.CRISP_WEBSITE_ID="ВАШ_ID";
+(function(){d=document;s=d.createElement("script");
+s.src="https://client.crisp.chat/l.js";s.async=1;
+d.getElementsByTagName("head")[0].appendChild(s);})();
+</script>` }
+    ];
+    
+    async function loadChatStatus() {
       try {
-        const res = await fetch('/api/site-settings');
+        const res = await fetch('/api/admin/chat-status');
         const data = await res.json();
-        document.getElementById('chatScript').value = data.chatScript || '';
+        const badge = document.getElementById('chatStatusBadge');
+        const provider = document.getElementById('chatProviderName');
+        
+        if (data.active) {
+          badge.textContent = 'Активен';
+          badge.style.background = '#e8f5e9';
+          badge.style.color = '#4CAF50';
+          provider.textContent = data.provider || '';
+        } else {
+          badge.textContent = 'Отключен';
+          badge.style.background = '#ffebee';
+          badge.style.color = '#f44336';
+          provider.textContent = '';
+        }
       } catch (err) {
-        console.error('Error loading support settings:', err);
+        console.error('Error loading chat status:', err);
       }
     }
     
-    async function saveChatSettings() {
+    function showChatEditModal() {
+      document.getElementById('chatEditModal').classList.add('show');
+      document.getElementById('chatPasswordStep').style.display = 'block';
+      document.getElementById('chatEditStep').style.display = 'none';
+      document.getElementById('chatEditPassword').value = '';
+      document.getElementById('chatPasswordError').style.display = 'none';
+      renderChatPresets();
+    }
+    
+    function closeChatModal() {
+      document.getElementById('chatEditModal').classList.remove('show');
+    }
+    
+    function renderChatPresets() {
+      const container = document.getElementById('chatPresets');
+      container.innerHTML = chatPresets.map((p, i) => `
+        <button onclick="selectChatPreset(${i})" style="padding: 12px 16px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 8px; text-align: left; cursor: pointer; font-size: 14px; transition: all 0.2s;">
+          ${p.name}
+        </button>
+      `).join('');
+    }
+    
+    function selectChatPreset(index) {
+      document.getElementById('chatScriptEdit').value = chatPresets[index].code;
+    }
+    
+    async function verifyChatPassword() {
+      const password = document.getElementById('chatEditPassword').value;
+      
       try {
-        const chatScript = document.getElementById('chatScript').value;
+        const res = await fetch('/api/admin/chat-script', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+        
+        const data = await res.json();
+        
+        if (data.success) {
+          document.getElementById('chatPasswordStep').style.display = 'none';
+          document.getElementById('chatEditStep').style.display = 'block';
+          document.getElementById('chatScriptEdit').value = data.chatScript || '';
+        } else {
+          document.getElementById('chatPasswordError').style.display = 'block';
+        }
+      } catch (err) {
+        document.getElementById('chatPasswordError').style.display = 'block';
+      }
+    }
+    
+    async function saveChatFromModal() {
+      try {
+        const chatScript = document.getElementById('chatScriptEdit').value;
         
         const res = await fetch('/api/admin/site-settings', {
           method: 'POST',
@@ -653,12 +794,37 @@
         
         if (res.ok) {
           alert('Настройки чата сохранены');
+          closeChatModal();
+          loadChatStatus();
         } else {
           alert('Ошибка сохранения');
         }
       } catch (err) {
         console.error('Error saving chat settings:', err);
         alert('Ошибка сохранения');
+      }
+    }
+    
+    async function clearChatWidget() {
+      if (!confirm('Отключить чат на сайте?')) return;
+      
+      try {
+        const res = await fetch('/api/admin/site-settings', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders()
+          },
+          body: JSON.stringify({ chatScript: '' })
+        });
+        
+        if (res.ok) {
+          alert('Чат отключен');
+          closeChatModal();
+          loadChatStatus();
+        }
+      } catch (err) {
+        alert('Ошибка');
       }
     }
     

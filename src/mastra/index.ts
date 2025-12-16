@@ -1201,6 +1201,68 @@ export const mastra = new Mastra({
         },
       },
 
+      // Chat Status API: Get only status without revealing code (for admin display)
+      {
+        path: "/api/admin/chat-status",
+        method: "GET",
+        handler: async (c) => {
+          try {
+            const pg = await import("pg");
+            const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+            const result = await pool.query("SELECT chat_script FROM site_settings ORDER BY id DESC LIMIT 1");
+            await pool.end();
+            
+            if (result.rows.length === 0 || !result.rows[0].chat_script) {
+              return c.json({ active: false, provider: null });
+            }
+            
+            const script = result.rows[0].chat_script;
+            let provider = "Неизвестный";
+            if (script.includes("livechat") || script.includes("LiveChat")) provider = "LiveChat";
+            else if (script.includes("tidio")) provider = "Tidio";
+            else if (script.includes("tawk")) provider = "Tawk.to";
+            else if (script.includes("jivosite") || script.includes("jivo")) provider = "JivoSite";
+            else if (script.includes("chatra")) provider = "Chatra";
+            else if (script.includes("carrot")) provider = "Carrot Quest";
+            else if (script.includes("intercom")) provider = "Intercom";
+            else if (script.includes("zendesk")) provider = "Zendesk";
+            else if (script.includes("crisp")) provider = "Crisp";
+            
+            return c.json({ active: true, provider });
+          } catch (error) {
+            return c.json({ active: false, provider: null });
+          }
+        },
+      },
+
+      // Chat Script API: Get full code (requires password verification)
+      {
+        path: "/api/admin/chat-script",
+        method: "POST",
+        handler: async (c) => {
+          try {
+            const body = await c.req.json();
+            const adminPassword = process.env.ADMIN_PASSWORD;
+            
+            if (!adminPassword || body.password !== adminPassword) {
+              return c.json({ success: false, message: "Неверный пароль" }, 401);
+            }
+            
+            const pg = await import("pg");
+            const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+            const result = await pool.query("SELECT chat_script FROM site_settings ORDER BY id DESC LIMIT 1");
+            await pool.end();
+            
+            return c.json({ 
+              success: true, 
+              chatScript: result.rows.length > 0 ? result.rows[0].chat_script : "" 
+            });
+          } catch (error) {
+            return c.json({ success: false, message: "Ошибка" }, 500);
+          }
+        },
+      },
+
       // Payment Settings API: Get settings
       {
         path: "/api/payment-settings",
