@@ -1054,7 +1054,20 @@
     }
     
     loadData();
+    
+    // Load chat widget
+    (async function() {
+      try {
+        const res = await fetch('/api/site-settings');
+        const data = await res.json();
+        if (data.chatScript) {
+          const s = document.createElement('script');
+          s.src = data.chatScript;
+          s.async = true;
+          document.body.appendChild(s);
+        }
+      } catch(e) {}
+    })();
   </script>
-<script src="//code.tidio.co/ufjldpy2fgwbem1lrdwd8yqubddfk15k.js" async></script>
 </body>
 </html>
