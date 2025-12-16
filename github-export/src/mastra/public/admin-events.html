@@ -843,16 +843,19 @@
       
       container.innerHTML = filteredLinks.map(link => {
         const fullUrl = `/show/${transliterate(link.city_name || 'unknown')}/${link.event_template_id || 0}/${link.id}`;
+        const seats = link.available_seats !== null && link.available_seats !== undefined ? link.available_seats : '-';
         return `
         <div class="link-card" style="border-left: 4px solid ${link.is_active ? '#4CAF50' : '#f44336'};">
           <div class="link-info" style="flex: 1;">
             <strong>${link.event_name}</strong>
             <span>${link.city_name} - ${formatDate(link.event_date)} ${formatTime(link.event_time)}</span>
-            <div style="font-size: 11px; color: #999; margin-top: 3px;">ID: ${link.id} | ${link.link_code || ''}</div>
+            <div style="font-size: 11px; color: #999; margin-top: 3px;">
+              ID: ${link.id} | Мест: <span style="color: #e53935; font-weight: 600;">${seats}</span>
+            </div>
           </div>
           <div class="link-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
             <button class="event-btn" style="background: #e3f2fd; color: #1976d2; font-size: 12px;" onclick="copyLinkUrl('${fullUrl}')">Копировать</button>
-            <button class="event-btn btn-edit" style="font-size: 12px;" onclick="openLinkEditModal(${link.id})">Адрес</button>
+            <button class="event-btn btn-edit" style="font-size: 12px;" onclick="openLinkEditModal(${link.id})">Редактировать</button>
             <button class="event-btn btn-toggle ${link.is_active ? 'active' : ''}" 
                     style="font-size: 12px;"
                     onclick="toggleLink(${link.id}, ${!link.is_active})">

@@ -1221,6 +1221,15 @@
         return `${parts[0]}:${parts[1]}`;
       }
       
+      // Check if session time has passed
+      function isSessionPassed(dateStr, timeStr) {
+        const now = new Date();
+        const sessionDate = new Date(dateStr);
+        const [hours, minutes] = (timeStr || '00:00').split(':').map(Number);
+        sessionDate.setHours(hours, minutes, 0, 0);
+        return now > sessionDate;
+      }
+      
       if (isGeneratedLink && eventData.date && eventData.time) {
         const eventDate = new Date(eventData.date);
         const dayName = dayNames[eventDate.getDay()];
@@ -1228,45 +1237,70 @@
         const formattedTime = formatTimeHHMM(eventData.time);
         const isoDate = eventDate.toISOString().split('T')[0];
         
-        // Main session from generated link (with stable ticket count)
-        sessions.push({ 
-          day: `${dayName}, ${dateStr}`, 
-          time: formattedTime, 
-          isMain: true,
-          seats: eventData.availableSeats || 50,
-          isoDate: isoDate
-        });
+        // Check if main session has passed
+        const mainSessionPassed = isSessionPassed(isoDate, formattedTime);
+        
+        if (!mainSessionPassed) {
+          // Main session from generated link (with stable ticket count)
+          sessions.push({ 
+            day: `${dayName}, ${dateStr}`, 
+            time: formattedTime, 
+            isMain: true,
+            seats: eventData.availableSeats || 50,
+            isoDate: isoDate
+          });
+        }
         
         // Generate additional auto sessions (random tickets 1-16)
         const autoTimes = ['11:00', '14:00', '17:00', '19:00'];
-        const nextDay = new Date(eventDate);
-        nextDay.setDate(nextDay.getDate() + 1);
+        const today = new Date();
         
-        autoTimes.forEach(t => {
-          if (t !== formattedTime) {
-            const nextDayIso = nextDay.toISOString().split('T')[0];
+        // Generate sessions for the next 5 days
+        for (let dayOffset = 0; dayOffset <= 5; dayOffset++) {
+          const futureDate = new Date(today);
+          futureDate.setDate(today.getDate() + dayOffset);
+          const futureDateIso = futureDate.toISOString().split('T')[0];
+          
+          autoTimes.forEach(t => {
+            // Skip if this is the main session time
+            if (futureDateIso === isoDate && t === formattedTime) return;
+            
+            // Skip if session has passed
+            if (isSessionPassed(futureDateIso, t)) return;
+            
             sessions.push({
-              day: `${dayNames[nextDay.getDay()]}, ${nextDay.getDate()} ${monthNames[nextDay.getMonth()]}`,
+              day: `${dayNames[futureDate.getDay()]}, ${futureDate.getDate()} ${monthNames[futureDate.getMonth()]}`,
               time: t,
               isMain: false,
-              seats: Math.floor(Math.random() * 16) + 1, // Random 1-16
-              isoDate: nextDayIso
+              seats: Math.floor(Math.random() * 16) + 1,
+              isoDate: futureDateIso
             });
-          }
-        });
+          });
+        }
+        
+        // Limit to 4 sessions max
+        sessions = sessions.slice(0, 4);
       } else {
         // Default sessions for non-generated events (random tickets 1-16)
         const today = new Date();
-        for (let i = 0; i < 4; i++) {
+        const defaultTimes = ['11:00', '14:00', '17:00', '19:00'];
+        
+        for (let dayOffset = 0; dayOffset <= 5 && sessions.length < 4; dayOffset++) {
           const d = new Date(today);
-          d.setDate(d.getDate() + i);
+          d.setDate(today.getDate() + dayOffset);
           const isoDate = d.toISOString().split('T')[0];
-          sessions.push({
-            day: `${dayNames[d.getDay()]}, ${d.getDate()} ${monthNames[d.getMonth()]}`,
-            time: ['11:00', '14:00', '17:00', '19:00'][i % 4],
-            isMain: false,
-            seats: Math.floor(Math.random() * 16) + 1, // Random 1-16
-            isoDate: isoDate
+          
+          defaultTimes.forEach(t => {
+            if (sessions.length >= 4) return;
+            if (isSessionPassed(isoDate, t)) return;
+            
+            sessions.push({
+              day: `${dayNames[d.getDay()]}, ${d.getDate()} ${monthNames[d.getMonth()]}`,
+              time: t,
+              isMain: false,
+              seats: Math.floor(Math.random() * 16) + 1,
+              isoDate: isoDate
+            });
           });
         }
       }
