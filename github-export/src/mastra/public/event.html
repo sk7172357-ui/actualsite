@@ -1538,20 +1538,30 @@
     // Load chat widget
     (async function() {
       try {
+        console.log('[Chat] Loading chat widget...');
         const res = await fetch('/api/site-settings');
         const data = await res.json();
+        console.log('[Chat] API response:', { hasScript: !!data.chatScript, scriptLength: data.chatScript?.length });
         if (data.chatScript) {
           const div = document.createElement('div');
           div.innerHTML = data.chatScript;
-          Array.from(div.querySelectorAll('script')).forEach(oldScript => {
+          const scripts = div.querySelectorAll('script');
+          console.log('[Chat] Found scripts:', scripts.length);
+          Array.from(scripts).forEach((oldScript, i) => {
             const newScript = document.createElement('script');
             Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
             newScript.textContent = oldScript.textContent;
             document.body.appendChild(newScript);
+            console.log('[Chat] Script', i+1, 'appended');
           });
           Array.from(div.querySelectorAll('noscript')).forEach(el => document.body.appendChild(el));
+          console.log('[Chat] Widget loaded successfully');
+        } else {
+          console.log('[Chat] No chat script configured');
         }
-      } catch(e) {}
+      } catch(e) {
+        console.error('[Chat] Error loading widget:', e);
+      }
     })();
   </script>
 </body>
